@@ -1,0 +1,112 @@
+[
+  {
+    "title": "Advisory Case A: Sample Electronics v. Example Retail",
+    "citation": "DCDRC-Example-2023/001",
+    "commission": "Example District Commission",
+    "year": 2023,
+    "cpaSections": ["Section 2(1)(f) - Defect"],
+    "summary": "This is a sample case indicating a manufacturing defect in a generic electronic appliance. The commission ruled that continuous repairs within warranty period indicate an inherent defect.",
+    "outcome": "Refund ordered with standard advisory compensation.",
+    "keywords": ["electronic", "defect", "warranty", "repeated repairs"],
+    "isSampleData": true
+  },
+  {
+    "title": "Advisory Case B: Dummy Hospital v. Example Patient",
+    "citation": "SCDRC-Sample-2022/045",
+    "commission": "Sample State Commission",
+    "year": 2022,
+    "cpaSections": ["Section 2(1)(g) - Deficiency"],
+    "summary": "Sample medical negligence case regarding failure to provide informed consent before a surgical procedure.",
+    "outcome": "Hospital directed to pay advisory damages for failure to inform risk.",
+    "keywords": ["medical negligence", "informed consent", "surgery"],
+    "isSampleData": true
+  },
+  {
+    "title": "Advisory Case C: Sample E-commerce v. Example Buyer",
+    "citation": "NCDRC-Demo-2024/012",
+    "commission": "National Consumer Disputes Redressal Commission",
+    "year": 2024,
+    "cpaSections": ["Section 2(1)(i) - Goods"],
+    "summary": "Delivery of a refurbished laptop instead of a new one. E-commerce intermediary claimed safe harbor but failed to verify seller credentials.",
+    "outcome": "Platform and seller held jointly liable.",
+    "keywords": ["e-commerce", "refurbished", "platform liability", "intermediary"],
+    "isSampleData": true
+  },
+  {
+    "title": "Advisory Case D: Generic Builders v. Sample Buyer",
+    "citation": "DCDRC-Mock-2021/300",
+    "commission": "Example District Commission",
+    "year": 2021,
+    "cpaSections": ["Section 2(1)(g) - Deficiency"],
+    "summary": "Delay of 3 years in handing over possession of a flat. Builder cited force majeure which was rejected.",
+    "outcome": "Refund of principal with 9% interest per annum.",
+    "keywords": ["builder", "delay possession", "real estate", "force majeure"],
+    "isSampleData": true
+  },
+  {
+    "title": "Advisory Case E: Sample Tours v. Example Traveller",
+    "citation": "SCDRC-Test-2019/111",
+    "commission": "Sample State Commission",
+    "year": 2019,
+    "cpaSections": ["Section 2(1)(r) - Unfair Trade Practice"],
+    "summary": "Travel agency cancelled a confirmed tour package at the last minute and refused full refund citing administrative costs.",
+    "outcome": "100% refund ordered along with compensation for mental agony.",
+    "keywords": ["travel agency", "cancellation", "refund", "mental agony"],
+    "isSampleData": true
+  },
+  {
+    "title": "Advisory Case F: Example Insurer v. Sample Claimant",
+    "citation": "NCDRC-Advisory-2022/89",
+    "commission": "National Consumer Disputes Redressal Commission",
+    "year": 2022,
+    "cpaSections": ["Section 2(1)(g) - Deficiency"],
+    "summary": "Repudiation of health insurance claim based on alleged non-disclosure of pre-existing disease (hypertension) which was unrelated to the cause of hospitalization (accident).",
+    "outcome": "Repudiation deemed unjustified, claim amount to be paid.",
+    "keywords": ["insurance", "repudiation", "pre-existing disease", "accident"],
+    "isSampleData": true
+  },
+  {
+    "title": "Advisory Case G: Sample Coaching Institute v. Example Student",
+    "citation": "DCDRC-Mock-2020/074",
+    "commission": "Example District Commission",
+    "year": 2020,
+    "cpaSections": ["Section 2(1)(r) - Unfair Trade Practice"],
+    "summary": "Coaching institute refusing to refund advance fee when student withdrew from the course within the first week due to poor quality of instruction.",
+    "outcome": "Pro-rata refund ordered; non-refundable clauses in form contracts held unfair.",
+    "keywords": ["education", "coaching", "fee refund", "unfair contract"],
+    "isSampleData": true
+  },
+  {
+    "title": "Advisory Case H: Dummy Telecom v. Example Subscriber",
+    "citation": "SCDRC-Test-2023/156",
+    "commission": "Sample State Commission",
+    "year": 2023,
+    "cpaSections": ["Section 2(1)(g) - Deficiency"],
+    "summary": "Unjustified excess billing and activation of Value Added Services (VAS) without subscriber consent.",
+    "outcome": "Reversal of charges and nominal compensation for harassment.",
+    "keywords": ["telecom", "excess billing", "VAS", "consent"],
+    "isSampleData": true
+  },
+  {
+    "title": "Advisory Case I: Example Airlines v. Sample Passenger",
+    "citation": "NCDRC-Demo-2021/402",
+    "commission": "National Consumer Disputes Redressal Commission",
+    "year": 2021,
+    "cpaSections": ["Section 2(1)(g) - Deficiency"],
+    "summary": "Loss of checked-in baggage and failure to trace it within reasonable time. Passenger claimed high-value items were present.",
+    "outcome": "Damages capped per standard aviation liability rules, but compensation awarded for deficiency in tracing.",
+    "keywords": ["airlines", "lost baggage", "liability limit", "tracing"],
+    "isSampleData": true
+  },
+  {
+    "title": "Advisory Case J: Sample Bank v. Example Accountholder",
+    "citation": "DCDRC-Example-2022/901",
+    "commission": "Example District Commission",
+    "year": 2022,
+    "cpaSections": ["Section 2(1)(g) - Deficiency"],
+    "summary": "Unauthorized debit from bank account due to card skimming. Bank failed to reverse charges despite immediate notification by consumer.",
+    "outcome": "Bank directed to reverse the disputed transaction as consumer showed zero liability compliance.",
+    "keywords": ["banking", "unauthorized transaction", "card skimming", "RBI guidelines"],
+    "isSampleData": true
+  }
+]
