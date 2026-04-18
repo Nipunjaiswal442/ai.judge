@@ -9,7 +9,9 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter }
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function SignInPage() {
+import { Suspense } from "react";
+
+function SignInContent() {
   const searchParams = useSearchParams();
   const rolePrefix = searchParams.get("role") || "LAWYER";
   const router = useRouter();
@@ -111,5 +113,13 @@ export default function SignInPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#061735] text-white">Loading...</div>}>
+      <SignInContent />
+    </Suspense>
   );
 }

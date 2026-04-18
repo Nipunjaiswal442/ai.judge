@@ -8,7 +8,9 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter }
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function SignUpPage() {
+import { Suspense } from "react";
+
+function SignUpContent() {
   const searchParams = useSearchParams();
   const rolePrefix = searchParams.get("role") || "LAWYER";
   const router = useRouter();
@@ -118,5 +120,13 @@ export default function SignUpPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#061735] text-white">Loading...</div>}>
+      <SignUpContent />
+    </Suspense>
   );
 }
