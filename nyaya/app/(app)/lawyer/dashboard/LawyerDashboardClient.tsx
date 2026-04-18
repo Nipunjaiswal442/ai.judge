@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Scale } from "lucide-react";
+import { Scale, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,9 +23,9 @@ export default function LawyerDashboardClient({ userId }: { userId: Id<"users"> 
         description="You have not created any cases yet or been invited as an opposing counsel."
         icon={<Scale size={32} strokeWidth={1.5} />}
         action={
-          <Button asChild className="bg-[#0a1f44] hover:bg-[#1e3a8a] text-white">
-            <Link href="/lawyer/cases/new">Create New Case</Link>
-          </Button>
+          <Link href="/lawyer/cases/new" className="bg-[#0a1f44] hover:bg-[#1e3a8a] text-white py-2 px-4 rounded-md text-sm font-medium transition-colors">
+            Create New Case
+          </Link>
         }
       />
     );
@@ -34,13 +34,13 @@ export default function LawyerDashboardClient({ userId }: { userId: Id<"users"> 
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button asChild className="bg-[#0a1f44] hover:bg-[#1e3a8a] text-white">
-          <Link href="/lawyer/cases/new">Create New Case</Link>
-        </Button>
+        <Link href="/lawyer/cases/new" className="bg-[#0a1f44] hover:bg-[#1e3a8a] text-white py-2 px-4 rounded-md text-sm font-medium flex items-center gap-2 transition-colors">
+          <Plus size={16} /> New Case
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cases.map((c) => (
+        {cases.map((c: any) => (
           <Card key={c._id} className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-start justify-between">
@@ -60,9 +60,9 @@ export default function LawyerDashboardClient({ userId }: { userId: Id<"users"> 
               </div>
               
               <div className="pt-4 flex w-full">
-                <Button asChild variant="outline" className="w-full text-[#1e3a8a] border-[#1e3a8a] hover:bg-slate-50">
-                  <Link href={`/lawyer/cases/${c._id}`}>View Case Details</Link>
-                </Button>
+                <Link href={`/lawyer/cases/${c._id}`} className="w-full text-[#1e3a8a] border border-[#1e3a8a] py-2 rounded-md hover:bg-slate-50 text-center text-sm font-medium transition-colors">
+                  Open Submissions
+                </Link>
               </div>
             </CardContent>
           </Card>

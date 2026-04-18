@@ -1,4 +1,4 @@
-import { mutation as rawMutation, MutationBuilder } from "./_generated/server";
+import { mutation as rawMutation } from "./_generated/server";
 import { DataModel } from "./_generated/dataModel";
 
 export const auditMutation = ((args: any) => {

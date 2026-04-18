@@ -64,7 +64,7 @@ export default function NewCaseClient({ userId }: { userId: Id<"users"> }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="category">Case Category <span className="text-red-500">*</span></Label>
-                <Select required onValueChange={(val) => handleChange("category", val)}>
+                <Select required onValueChange={(val) => handleChange("category", val as string)}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>

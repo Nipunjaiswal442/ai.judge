@@ -69,8 +69,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
           <p className="text-slate-300 font-medium tracking-wide">{caseData.category.replace(/_/g, " ")} • {caseData.jurisdiction}</p>
         </div>
       </div>
-
-      <Accordion type="multiple" defaultValue={["summary", "agreed", "disputed"]} className="space-y-4">
+      <Accordion className="space-y-4">
         {/* Case Summary */}
         <AccordionItem value="summary" className="bg-white border-l-4 border-l-[#0a1f44] border-t border-r border-b border-slate-200 rounded-r-xl px-6 py-2 shadow-sm">
           <AccordionTrigger className="text-2xl font-heading font-bold text-[#0a1f44] hover:no-underline">
@@ -88,7 +87,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-6">
             <ul className="list-disc pl-5 space-y-2 text-slate-700">
-              {brief.agreedFacts.map((fact, i) => (
+              {brief.agreedFacts.map((fact: string, i: number) => (
                 <li key={i}>{fact}</li>
               ))}
             </ul>
@@ -101,7 +100,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
             Disputed Facts & Positions
           </AccordionTrigger>
           <AccordionContent className="space-y-6 pt-2 pb-6">
-            {brief.disputedFacts.map((df, i) => (
+            {brief.disputedFacts.map((df: any, i: number) => (
               <div key={i} className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <h4 className="font-semibold text-slate-900 mb-3">{i + 1}. {df.point}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -125,7 +124,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
             Applicable Law
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-6 space-y-3">
-            {brief.applicableLaw.map((law, i) => (
+            {brief.applicableLaw.map((law: any, i: number) => (
               <div key={i} className="pb-2 border-b border-slate-100 last:border-0">
                 <h4 className="font-semibold text-slate-900">{law.statute} - {law.section}</h4>
                 <p className="text-sm text-slate-600 mt-1">{law.relevance}</p>
@@ -141,7 +140,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-6">
             <ul className="list-disc pl-5 space-y-2 text-red-700 font-medium">
-              {brief.caveats.map((c, i) => (
+              {brief.caveats.map((c: string, i: number) => (
                 <li key={i}>{c}</li>
               ))}
             </ul>

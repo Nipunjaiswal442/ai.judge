@@ -662,7 +662,7 @@ export default function LandingPage() {
             <span>Pre-launch · In active development · 0 users</span>
           </div>
 
-          <div class="hero-devanagari">न्याय</div>
+          <div className="hero-devanagari">न्याय</div>
           <h1>Clarity for the bench.<br/>Structure for the bar.</h1>
           <p className="hero-tagline">An AI-assisted case analysis platform for Indian consumer disputes.</p>
           <p className="hero-description">
@@ -683,7 +683,7 @@ export default function LandingPage() {
           <div className="hero-status-row">
             <div className="status-item">
               <div className="status-label">Stage</div>
-              <div class="status-value">MVP in build</div>
+              <div className="status-value">MVP in build</div>
             </div>
             <div className="status-item">
               <div className="status-label">Scope</div>
@@ -882,7 +882,7 @@ export default function LandingPage() {
           <div className="tech-stack">
             <span className="tech-pill">Next.js 15</span>
             <span className="tech-pill">TypeScript</span>
-            <span class="tech-pill">Convex</span>
+            <span className="tech-pill">Convex</span>
             <span className="tech-pill">NextAuth.js</span>
             <span className="tech-pill">Tailwind CSS</span>
             <span className="tech-pill">shadcn/ui</span>

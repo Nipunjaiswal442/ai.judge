@@ -27,7 +27,7 @@ export default function JudgeDashboardClient() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {cases.map((c) => (
+      {cases.map((c: any) => (
         <Card key={c._id} className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-start justify-between">
@@ -56,9 +56,9 @@ export default function JudgeDashboardClient() {
             </div>
             
             <div className="pt-4 flex w-full">
-              <Button asChild className="w-full bg-[#1e3a8a] hover:bg-[#0a1f44] text-white">
-                <Link href={`/judge/cases/${c._id}`}>Review Advisory Brief</Link>
-              </Button>
+              <Link href={`/judge/cases/${c._id}`} className="w-full bg-[#1e3a8a] hover:bg-[#0a1f44] text-white py-2.5 rounded-md text-center text-sm font-medium transition-colors">
+                Review Advisory Brief
+              </Link>
             </div>
           </CardContent>
         </Card>

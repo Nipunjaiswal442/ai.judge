@@ -8,8 +8,11 @@
  * @module
  */
 
+import type * as audit from "../audit.js";
 import type * as cases from "../cases.js";
 import type * as documents from "../documents.js";
+import type * as judge from "../judge.js";
+import type * as precedents from "../precedents.js";
 import type * as qa from "../qa.js";
 import type * as users from "../users.js";
 
@@ -20,8 +23,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  audit: typeof audit;
   cases: typeof cases;
   documents: typeof documents;
+  judge: typeof judge;
+  precedents: typeof precedents;
   qa: typeof qa;
   users: typeof users;
 }>;

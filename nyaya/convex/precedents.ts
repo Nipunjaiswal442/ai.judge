@@ -29,7 +29,7 @@ export const searchPrecedents = action({
     // We fetch the actual documents based on the vector search results
     const documents = await Promise.all(
       results.map(async (res) => {
-        return await ctx.runQuery(api.precedents.getPrecedentById, { id: res._id });
+        return await ctx.runQuery("precedents:getPrecedentById" as any, { id: res._id });
       })
     );
     return documents;
@@ -42,5 +42,3 @@ export const getPrecedentById = query({
     return await ctx.db.get(args.id);
   },
 });
-
-import { api } from "./_generated/api";
