@@ -20,7 +20,7 @@ export const getQAEntries = query({
       .query("qaEntries")
       .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
       .collect()
-      .then(entries => entries.sort((a, b) => a.orderIndex - b.orderIndex));
+      .then((entries) => entries.sort((a, b) => a.orderIndex - b.orderIndex));
   },
 });
 
@@ -41,7 +41,6 @@ export const initializeQASession = mutation({
       status: "IN_PROGRESS",
     });
 
-    // Seed questions
     const cat = CATEGORY_QUESTIONS[args.category];
     if (cat) {
       const qs = args.side === "COMPLAINANT" ? cat.complainant : cat.opposing;
@@ -63,16 +62,55 @@ export const initializeQASession = mutation({
 export const updateAnswer = mutation({
   args: { entryId: v.id("qaEntries"), answerText: v.string() },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.entryId, { answerText: args.answerText });
+    // Simple completeness heuristic: short answers flagged for follow-up.
+    const trimmed = args.answerText.trim();
+    const followUpNeeded = trimmed.length > 0 && trimmed.length < 20;
+    const followUpNote = followUpNeeded
+      ? "Answer appears brief — please elaborate with specific dates, amounts, or document references."
+      : undefined;
+
+    await ctx.db.patch(args.entryId, {
+      answerText: args.answerText,
+      aiFollowUpNeeded: followUpNeeded,
+      aiFollowUpNote: followUpNote,
+    });
   },
 });
 
 export const submitQASession = mutation({
   args: { sessionId: v.id("qaSessions") },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.sessionId, { 
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) throw new Error("Session not found");
+
+    await ctx.db.patch(args.sessionId, {
       status: "SUBMITTED",
-      submittedAt: Date.now() 
+      submittedAt: Date.now(),
     });
+
+    // Advance case status based on which sides are submitted.
+    const allSessions = await ctx.db
+      .query("qaSessions")
+      .withIndex("by_case", (q) => q.eq("caseId", session.caseId))
+      .collect();
+
+    const submitted = allSessions.filter((s) =>
+      s._id === args.sessionId ? true : s.status === "SUBMITTED"
+    );
+    const complainantSubmitted = submitted.some((s) => s.side === "COMPLAINANT");
+    const opposingSubmitted = submitted.some((s) => s.side === "OPPOSING");
+
+    let newStatus: "AWAITING_OPPOSING" | "OPPOSING_IN_PROGRESS" | "READY_FOR_BRIEF" | null = null;
+    if (complainantSubmitted && opposingSubmitted) {
+      newStatus = "READY_FOR_BRIEF";
+    } else if (complainantSubmitted && !opposingSubmitted) {
+      newStatus = "AWAITING_OPPOSING";
+    } else if (!complainantSubmitted && opposingSubmitted) {
+      newStatus = "OPPOSING_IN_PROGRESS";
+    }
+
+    if (newStatus) {
+      await ctx.db.patch(session.caseId, { status: newStatus });
+    }
   },
 });

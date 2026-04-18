@@ -71,6 +71,8 @@ AUTH_GOOGLE_SECRET="your_google_secret"
 NVIDIA_API_KEY="nvapi-your-key-here"
 ```
 
+> On Vercel, also set `AUTH_TRUST_HOST=true` (required by Auth.js v5 on custom domains) and `CONVEX_DEPLOY_KEY` if you use `npx convex deploy` in the build step. `NEXTAUTH_URL` is auto-inferred from `VERCEL_URL` but can be set explicitly if you use a custom domain.
+
 ### 3. Initialize Database (Convex)
 In a separate terminal, run Convex to sync your database schema and push serverless functions:
 ```bash
@@ -91,7 +93,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 1. Connect your GitHub repository to Vercel.
 2. **IMPORTANT: Set the "Root Directory" to `nyaya`**. Since the Next.js application is inside a subfolder, Vercel will throw a `404 NOT_FOUND` error if you skip this step.
-3. In Vercel Project Settings, add all the environment variables listed above.
+3. In Vercel Project Settings, add **all** the environment variables listed above, including `AUTH_TRUST_HOST=true`. **If you skip `NEXT_PUBLIC_CONVEX_URL`, `AUTH_SECRET`, or `AUTH_TRUST_HOST`, sign-in will fail silently in production.**
 4. Modify your build command in Vercel to sync Convex schema prior to next build:
    - **Build Command**: `npx convex deploy && next build`
 5. Deploy!

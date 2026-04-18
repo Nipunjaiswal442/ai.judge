@@ -1,9 +1,9 @@
 import NextAuth, { DefaultSession } from "next-auth";
-import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import bcrypt from "bcryptjs";
+import { authConfig } from "./auth.config";
 
 declare module "next-auth" {
   interface Session {
@@ -14,15 +14,12 @@ declare module "next-auth" {
   }
 }
 
-// Ensure the URL is available to the Node.js runtime
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    }),
+    ...authConfig.providers,
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -30,22 +27,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        
+
         try {
           const user = await convex.query(api.users.getUserByEmail, {
             email: credentials.email as string,
           });
-          
+
           if (!user || !user.password) return null;
-          
+
           const passwordsMatch = await bcrypt.compare(
             credentials.password as string,
             user.password
           );
-          
+
           if (passwordsMatch) {
             return {
-              id: user.authId,
+              id: user._id,
               email: user.email,
               name: user.name,
               role: user.role,
@@ -54,51 +51,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } catch (error) {
           console.error("Auth error:", error);
         }
-        
+
         return null;
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as any).role || "LAWYER";
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.role = token.role as string;
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
+    ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         try {
           const existingUser = await convex.query(api.users.getUserByEmail, {
             email: user.email!,
           });
+          let convexUserId: string;
           if (!existingUser) {
-            // Registering via Google for the first time
-            await convex.mutation(api.users.createUser, {
+            convexUserId = await convex.mutation(api.users.createUser, {
               email: user.email!,
               name: user.name || "Unknown",
               authId: user.id || account.providerAccountId,
-              role: "LAWYER", // Default role
+              role: "LAWYER",
             });
+          } else {
+            convexUserId = existingUser._id;
           }
+          // Override user.id so jwt callback stores Convex _id
+          (user as any).id = convexUserId;
+          (user as any).role = existingUser?.role || "LAWYER";
         } catch (error) {
           console.error("Google sign in error:", error);
           return false;
         }
       }
       return true;
-    }
-  },
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/sign-in",
+    },
   },
 });

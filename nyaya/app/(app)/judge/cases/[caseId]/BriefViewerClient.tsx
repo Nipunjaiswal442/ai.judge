@@ -14,6 +14,10 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
   const caseData = useQuery(api.judge.getCaseById, { caseId });
   const brief = useQuery(api.judge.getAnalysisBrief, { caseId });
   const acknowledgeBrief = useMutation(api.judge.acknowledgeBrief);
+  const precedents = useQuery(
+    api.precedents.getManyByIds,
+    brief?.citedPrecedentIds ? { ids: brief.citedPrecedentIds } : "skip"
+  );
 
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -130,6 +134,76 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
                 <p className="text-sm text-slate-600 mt-1">{law.relevance}</p>
               </div>
             ))}
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Relevant Precedents */}
+        <AccordionItem value="precedents" className="bg-white border-l-4 border-l-emerald-600 border-slate-200 rounded-r-xl px-6 py-2 shadow-sm">
+          <AccordionTrigger className="text-2xl font-heading font-bold text-emerald-700 hover:no-underline">
+            Relevant Precedents
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-6 space-y-3">
+            {precedents === undefined && (
+              <p className="text-sm text-slate-400">Loading precedents...</p>
+            )}
+            {precedents && precedents.filter(Boolean).length === 0 && (
+              <p className="text-sm text-slate-500">No precedents cited in the curated set for this case.</p>
+            )}
+            {precedents?.filter(Boolean).map((p: any) => (
+              <div key={p._id} className="pb-2 border-b border-slate-100 last:border-0">
+                <h4 className="font-semibold text-slate-900">{p.title}</h4>
+                <p className="text-xs font-mono text-slate-500">{p.citation} • {p.commission} • {p.year}</p>
+                <p className="text-sm text-slate-600 mt-1">{p.summary}</p>
+              </div>
+            ))}
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Procedural Flags */}
+        <AccordionItem value="procedural" className="bg-white border-l-4 border-l-orange-500 border-slate-200 rounded-r-xl px-6 py-2 shadow-sm">
+          <AccordionTrigger className="text-2xl font-heading font-bold text-orange-600 hover:no-underline">
+            Procedural Flags
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-6">
+            {brief.proceduralFlags.length === 0 ? (
+              <p className="text-sm text-slate-500">No procedural issues flagged.</p>
+            ) : (
+              <ul className="list-disc pl-5 space-y-2 text-slate-700">
+                {brief.proceduralFlags.map((f: string, i: number) => <li key={i}>{f}</li>)}
+              </ul>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Evidentiary Gaps */}
+        <AccordionItem value="gaps" className="bg-white border-l-4 border-l-violet-500 border-slate-200 rounded-r-xl px-6 py-2 shadow-sm">
+          <AccordionTrigger className="text-2xl font-heading font-bold text-violet-600 hover:no-underline">
+            Evidentiary Gaps
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-6">
+            {brief.evidentiaryGaps.length === 0 ? (
+              <p className="text-sm text-slate-500">No major gaps identified.</p>
+            ) : (
+              <ul className="list-disc pl-5 space-y-2 text-slate-700">
+                {brief.evidentiaryGaps.map((g: string, i: number) => <li key={i}>{g}</li>)}
+              </ul>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Confidence */}
+        <AccordionItem value="confidence" className="bg-white border-l-4 border-l-slate-400 border-slate-200 rounded-r-xl px-6 py-2 shadow-sm">
+          <AccordionTrigger className="text-2xl font-heading font-bold text-slate-700 hover:no-underline">
+            Confidence Score
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-3 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-amber-400 to-emerald-500" style={{ width: `${brief.confidenceScore}%` }} />
+              </div>
+              <span className="text-lg font-bold text-slate-800">{brief.confidenceScore}%</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-3">Self-reported by the underlying language model. Always apply independent judicial judgment.</p>
           </AccordionContent>
         </AccordionItem>
 

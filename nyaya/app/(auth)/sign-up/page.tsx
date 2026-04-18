@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,18 +42,21 @@ function SignUpContent() {
         return;
       }
       
-      // Successfully registered, now log them in
-      const signInRes = await fetch("/api/auth/callback/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          email,
-          password,
-          redirect: "false"
-        })
+      const signInRes = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
-      // the built-in credentials callback route. OR simply redirect to Sign In
-      router.push(`/sign-in?role=${rolePrefix}`);
+
+      if (signInRes?.error) {
+        setError("Registered, but auto sign-in failed. Please sign in manually.");
+        setLoading(false);
+        router.push(`/sign-in?role=${rolePrefix}`);
+        return;
+      }
+
+      router.push(rolePrefix === "JUDGE" ? "/judge/dashboard" : "/lawyer/dashboard");
+      router.refresh();
     } catch (err) {
       setError("Registration failed. Please try again.");
       setLoading(false);
