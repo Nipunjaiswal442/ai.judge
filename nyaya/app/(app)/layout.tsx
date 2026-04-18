@@ -10,6 +10,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/sign-in");
   }
 
+  // Convex IDs are lowercase alphanumeric, ~32 chars. Any session pre-dating the
+  // auth refactor will have an email string here — force a fresh sign-in to
+  // avoid passing invalid IDs to Convex and crashing the client.
+  const id = session.user.id || "";
+  const looksLikeConvexId = /^[a-z0-9]{20,}$/.test(id);
+  if (!looksLikeConvexId) {
+    await signOut({ redirectTo: "/sign-in" });
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col pt-16">
       <header className="fixed top-0 w-full h-16 bg-gradient-to-r from-[#061735] to-[#0a1f44] text-white flex items-center justify-between px-6 z-50 shadow-md">
