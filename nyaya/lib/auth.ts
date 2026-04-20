@@ -1,5 +1,6 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import bcrypt from "bcryptjs";
@@ -20,10 +21,20 @@ const convex =
     ? new ConvexHttpClient(convexUrl)
     : null;
 
+const hasGoogleOAuth =
+  Boolean(process.env.AUTH_GOOGLE_ID) && Boolean(process.env.AUTH_GOOGLE_SECRET);
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   providers: [
-    ...authConfig.providers,
+    ...(hasGoogleOAuth
+      ? [
+          Google({
+            clientId: process.env.AUTH_GOOGLE_ID!,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+          }),
+        ]
+      : []),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },

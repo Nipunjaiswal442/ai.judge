@@ -1,10 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
-import Google from "next-auth/providers/google";
 
 // Edge-safe config used by middleware. Do NOT import bcrypt or ConvexHttpClient here.
-const hasGoogleOAuth =
-  Boolean(process.env.AUTH_GOOGLE_ID) && Boolean(process.env.AUTH_GOOGLE_SECRET);
-
 const authSecret =
   process.env.AUTH_SECRET ||
   process.env.NEXTAUTH_SECRET ||
@@ -13,14 +9,7 @@ const authSecret =
   "nyaya-local-dev-secret";
 
 export const authConfig = {
-  providers: hasGoogleOAuth
-    ? [
-        Google({
-          clientId: process.env.AUTH_GOOGLE_ID!,
-          clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-        }),
-      ]
-    : [],
+  providers: [],
   pages: {
     signIn: "/sign-in",
   },
