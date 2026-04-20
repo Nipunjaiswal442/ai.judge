@@ -14,7 +14,11 @@ declare module "next-auth" {
   }
 }
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+const convex =
+  convexUrl && convexUrl.startsWith("https://")
+    ? new ConvexHttpClient(convexUrl)
+    : null;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -27,6 +31,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+        if (!convex) {
+          console.error("Auth error: NEXT_PUBLIC_CONVEX_URL is not configured.");
+          return null;
+        }
 
         try {
           const user = await convex.query(api.users.getUserByEmail, {
@@ -60,6 +68,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider === "google") {
+        if (!convex) {
+          console.error("Google sign in error: NEXT_PUBLIC_CONVEX_URL is not configured.");
+          return false;
+        }
         try {
           const existingUser = await convex.query(api.users.getUserByEmail, {
             email: user.email!,

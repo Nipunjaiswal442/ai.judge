@@ -19,6 +19,7 @@ function SignInContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,6 +41,30 @@ function SignInContent() {
     } else {
       router.push(rolePrefix === "JUDGE" ? "/judge/dashboard" : "/lawyer/dashboard");
     }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError("");
+    const callbackUrl = rolePrefix === "JUDGE" ? "/judge/dashboard" : "/lawyer/dashboard";
+    const res = await signIn("google", {
+      callbackUrl,
+      redirect: false,
+    });
+
+    if (res?.error) {
+      setError("Google sign-in is unavailable right now. Use email/password.");
+      setGoogleLoading(false);
+      return;
+    }
+
+    if (res?.url) {
+      router.push(res.url);
+      return;
+    }
+
+    setGoogleLoading(false);
+    setError("Google sign-in could not be started.");
   };
 
   return (
@@ -97,9 +122,10 @@ function SignInContent() {
             variant="outline" 
             type="button" 
             className="w-full text-slate-700 border-slate-300"
-            onClick={() => signIn("google", { callbackUrl: rolePrefix === "JUDGE" ? "/judge/dashboard" : "/lawyer/dashboard" })}
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading || loading}
           >
-            Google
+            {googleLoading ? "Redirecting..." : "Google"}
           </Button>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 text-sm text-center text-slate-600">

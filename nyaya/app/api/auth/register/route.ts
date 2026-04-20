@@ -3,11 +3,21 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import bcrypt from "bcryptjs";
 
-// Ensure the URL is available to the Node.js runtime
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+const convex =
+  convexUrl && convexUrl.startsWith("https://")
+    ? new ConvexHttpClient(convexUrl)
+    : null;
 
 export async function POST(req: Request) {
   try {
+    if (!convex) {
+      return NextResponse.json(
+        { error: "Server is missing NEXT_PUBLIC_CONVEX_URL configuration." },
+        { status: 500 }
+      );
+    }
+
     const { name, email, password, role } = await req.json();
 
     if (!email || !password || !name) {

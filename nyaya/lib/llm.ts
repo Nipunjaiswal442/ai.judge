@@ -63,3 +63,75 @@ export const generateBrief = async (caseDetails: any, precedents: any[]) => {
     throw error;
   }
 };
+
+export const generateJudgeCaseSynthesis = async ({
+  caseDetails,
+  qaSessions,
+  brief,
+  precedents,
+  judgeQuestion,
+}: {
+  caseDetails: any;
+  qaSessions: any[];
+  brief: any;
+  precedents: any[];
+  judgeQuestion: string;
+}) => {
+  const SYSTEM_INSTRUCTION = `You are Nyaya Bench Assistant.
+You assist judges by synthesizing lawyer-submitted material for one consumer dispute case.
+You are strictly advisory and must not issue or suggest a verdict.
+Only use the provided inputs. If something is missing, say "Not available in record."
+
+Respond in this exact markdown structure:
+### Synthesis
+2-4 short paragraphs with a neutral synthesis of both sides.
+
+### Key Record Points
+- Bullet points grounded in the lawyer Q&A and brief
+
+### Gaps or Ambiguities
+- Bullet points describing missing evidence, contradictions, or unanswered questions
+
+### Advisory Caveat
+One short sentence reminding that this is not a verdict.`;
+
+  const messages: any[] = [
+    { role: "system", content: SYSTEM_INSTRUCTION },
+    {
+      role: "user",
+      content: `Judge question:
+${judgeQuestion}
+
+Case details:
+${JSON.stringify(caseDetails, null, 2)}
+
+Lawyer Q&A sessions:
+${JSON.stringify(qaSessions, null, 2)}
+
+Generated analysis brief:
+${JSON.stringify(brief || {}, null, 2)}
+
+Cited precedents metadata:
+${JSON.stringify(precedents, null, 2)}`,
+    },
+  ];
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "deepseek-ai/deepseek-v3.2",
+      messages,
+      temperature: 0.1,
+      top_p: 0.95,
+      max_tokens: 1800,
+    });
+
+    const content = response.choices[0]?.message?.content?.trim();
+    if (!content) {
+      throw new Error("Assistant returned an empty response.");
+    }
+    return content;
+  } catch (error) {
+    console.error("Judge synthesis error:", error);
+    throw error;
+  }
+};

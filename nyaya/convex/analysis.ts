@@ -3,7 +3,7 @@
 import { action, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { generateBrief } from "../lib/llm";
+import { generateBrief, generateJudgeCaseSynthesis } from "../lib/llm";
 
 export const collectBriefContext = internalQuery({
   args: { caseId: v.id("cases") },
@@ -129,5 +129,62 @@ export const generateAnalysisBrief = action({
     });
 
     return { ok: true };
+  },
+});
+
+export const askJudgeCaseSynthesis = action({
+  args: {
+    caseId: v.id("cases"),
+    question: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ answer: string }> => {
+    if (!process.env.NVIDIA_API_KEY) {
+      throw new Error("LLM API key not configured. Set NVIDIA_API_KEY in Vercel env.");
+    }
+
+    const context: any = await ctx.runQuery(internal.analysis.collectBriefContext, {
+      caseId: args.caseId,
+    });
+
+    const submittedSides = context.sessions.filter((s: any) => s.status === "SUBMITTED");
+    if (submittedSides.length === 0) {
+      throw new Error("No submitted lawyer material found for this case yet.");
+    }
+
+    const brief = await ctx.runQuery(api.judge.getAnalysisBrief, {
+      caseId: args.caseId,
+    });
+
+    const citedPrecedents = brief?.citedPrecedentIds?.length
+      ? await ctx.runQuery(api.precedents.getManyByIds, { ids: brief.citedPrecedentIds })
+      : [];
+
+    const caseDetails = {
+      humanId: context.caseDoc.humanId,
+      category: context.caseDoc.category,
+      parties: `${context.caseDoc.complainantName} v. ${context.caseDoc.opposingPartyName}`,
+      jurisdiction: context.caseDoc.jurisdiction,
+      claimAmount: context.caseDoc.claimAmount,
+      reliefSought: context.caseDoc.reliefSought,
+      status: context.caseDoc.status,
+    };
+
+    const qaSessions = submittedSides.map((session: any) => ({
+      side: session.side,
+      status: session.status,
+      entries: (session.entries || []).filter((entry: any) =>
+        Boolean(String(entry.a || "").trim())
+      ),
+    }));
+
+    const answer = await generateJudgeCaseSynthesis({
+      caseDetails,
+      qaSessions,
+      brief,
+      precedents: citedPrecedents.filter(Boolean),
+      judgeQuestion: args.question,
+    });
+
+    return { answer };
   },
 });
