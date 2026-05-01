@@ -1,6 +1,7 @@
 import { mutation, query, action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 
 export const insertPrecedent = mutation({
   args: {
@@ -44,13 +45,13 @@ export const listPrecedents = query({
 
 export const searchPrecedents = action({
   args: { embedding: v.array(v.float64()) },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Array<Doc<"precedents"> | null>> => {
     const results = await ctx.vectorSearch("precedents", "by_embedding", {
       vector: args.embedding,
       limit: 5,
     });
 
-    const documents = await Promise.all(
+    const documents: Array<Doc<"precedents"> | null> = await Promise.all(
       results.map((res) =>
         ctx.runQuery(api.precedents.getPrecedentById, { id: res._id })
       )

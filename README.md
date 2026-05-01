@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
   <img src="https://img.shields.io/badge/Convex-DB-FF6F00?style=for-the-badge" alt="Convex" />
   <img src="https://img.shields.io/badge/DeepSeek--v3.2-NVIDIA_NIM-76B900?style=for-the-badge&logo=nvidia" alt="NVIDIA NIM" />
-  <img src="https://img.shields.io/badge/Auth.js-v5_beta-7C3AED?style=for-the-badge" alt="Auth.js" />
+  <img src="https://img.shields.io/badge/Clerk-Auth-7C3AED?style=for-the-badge" alt="Clerk Auth" />
   <img src="https://img.shields.io/badge/CSS_Design_System-Custom-0a1f44?style=for-the-badge" alt="Custom Design System" />
 </p>
 
@@ -168,16 +168,16 @@ A reusable `<Chakra />` SVG component (`components/ui/chakra.tsx`) renders a 24-
 ┌───────────────────────────────────────────────────────────┐
 │                     Client (Browser)                       │
 │  Next.js 15 App Router  ·  React 19  ·  Custom CSS DS     │
-│  Convex React SDK  ·  NextAuth client hooks               │
+│  Convex React SDK  ·  Clerk client hooks                  │
 └──────────────┬──────────────────────┬─────────────────────┘
                │                      │
                ▼                      ▼
 ┌──────────────────────┐  ┌─────────────────────────────────┐
-│   NextAuth v5 Beta   │  │      Convex (BaaS)              │
+│        Clerk         │  │      Convex (BaaS)              │
 │  ┌────────────────┐  │  │  ┌────────────────────────────┐ │
 │  │ Google OAuth   │  │  │  │  Realtime Database          │ │
-│  │ Credentials    │  │  │  │  Serverless Functions        │ │
-│  │ (bcrypt hash)  │  │  │  │  Vector Search (768-dim)     │ │
+│  │ Email/password │  │  │  │  Serverless Functions        │ │
+│  │ Session sync   │  │  │  │  Vector Search (768-dim)     │ │
 │  └────────────────┘  │  │  │  File Storage                │ │
 └──────────────────────┘  │  └────────────────────────────┘ │
                           └──────────┬──────────────────────┘
@@ -201,7 +201,7 @@ A reusable `<Chakra />` SVG component (`components/ui/chakra.tsx`) renders a 24-
 | **Styling** | Custom CSS design system + [shadcn/ui](https://ui.shadcn.com/) | Navy/paper lawyer aesthetic, utility classes |
 | **Database** | [Convex](https://convex.dev/) | Realtime DB, serverless functions, vector search, file storage |
 | **LLM** | [NVIDIA NIM](https://build.nvidia.com/) (DeepSeek v3.2) | Brief generation, judge synthesis, JSON-enforced outputs |
-| **Auth** | [Auth.js v5 beta](https://authjs.dev/) | Google OAuth + email/password credentials |
+| **Auth** | [Clerk](https://clerk.com/) | Google OAuth + email/password |
 | **Validation** | [Zod](https://zod.dev/) | Runtime type checking |
 
 ---
@@ -241,7 +241,7 @@ ai.judge/
     │   ├── users.ts            ← User management
     │   └── audit.ts            ← Audit logging
     └── lib/
-        ├── auth.ts             ← NextAuth configuration
+        ├── authRoles.ts        ← Clerk role normalization and dashboard routing
         ├── llm.ts              ← NVIDIA NIM / DeepSeek integration
         ├── caseCategories.ts   ← CPA categories & Q&A question templates
         └── prompts/            ← LLM system prompts
@@ -302,10 +302,9 @@ Create a `.env.local` file in the `nyaya/` directory:
 # ── Convex ──
 NEXT_PUBLIC_CONVEX_URL="https://your-convex-url.convex.cloud"
 
-# ── Auth.js (NextAuth v5) ──
-AUTH_SECRET="generate-a-secure-random-string"
-AUTH_GOOGLE_ID="your-google-oauth-client-id"
-AUTH_GOOGLE_SECRET="your-google-oauth-client-secret"
+# ── Clerk ──
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_or_live_..."
+CLERK_SECRET_KEY="sk_test_or_live_..."
 
 # ── NVIDIA AI (DeepSeek v3.2 via NIM) ──
 NVIDIA_API_KEY="nvapi-your-key-here"
@@ -315,9 +314,9 @@ NVIDIA_API_KEY="nvapi-your-key-here"
 
 | Variable | Required | Notes |
 |----------|----------|-------|
-| `AUTH_TRUST_HOST` | ✅ | Set to `true` (required by Auth.js v5 on custom domains) |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | ✅ | Clerk publishable key for the deployed instance |
+| `CLERK_SECRET_KEY` | ✅ | Clerk secret key for server-side account sync |
 | `CONVEX_DEPLOY_KEY` | ✅ | Required if using `npx convex deploy` in build step |
-| `NEXTAUTH_URL` | Optional | Auto-inferred from `VERCEL_URL`; set explicitly for custom domains |
 
 ---
 
@@ -332,7 +331,7 @@ NVIDIA_API_KEY="nvapi-your-key-here"
    ```
 5. **Deploy!** 🚀
 
-> ⚠️ If you skip setting `NEXT_PUBLIC_CONVEX_URL`, `AUTH_SECRET`, or `AUTH_TRUST_HOST`, sign-in will fail silently in production.
+> ⚠️ If you skip setting `NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, or `CLERK_SECRET_KEY`, sign-in will fail in production.
 
 ---
 

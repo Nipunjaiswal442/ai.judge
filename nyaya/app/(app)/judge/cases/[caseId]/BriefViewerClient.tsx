@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -33,9 +33,6 @@ function ChevronLIcon() {
 }
 function ChevronRIcon() {
   return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6"/></svg>;
-}
-function DocIcon() {
-  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>;
 }
 function GavelIcon() {
   return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m14 13-8.5 8.5a2.12 2.12 0 0 1-3-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/></svg>;
@@ -90,6 +87,23 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
         <aside className="brief-toc" />
         <main className="brief-mid">
           <div className="muted" style={{ fontSize: 13 }}>Loading advisory brief…</div>
+        </main>
+        <aside className="brief-source" />
+      </div>
+    );
+  }
+
+  if (!caseData) {
+    return (
+      <div className="brief-shell">
+        <aside className="brief-toc" />
+        <main className="brief-mid">
+          <div className="card" style={{ padding: 32, textAlign: "center" }}>
+            <div className="serif" style={{ fontSize: 22, fontWeight: 500, marginBottom: 8 }}>Case Not Found</div>
+            <p className="muted" style={{ fontSize: 13 }}>
+              This matter is unavailable or may have been removed.
+            </p>
+          </div>
         </main>
         <aside className="brief-source" />
       </div>
@@ -155,7 +169,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
     if (activeSection === "disputed") {
       return (
         <div className="col" style={{ gap: 14 }}>
-          {brief.disputedFacts?.map((df: any, i: number) => (
+          {brief.disputedFacts?.map((df, i) => (
             <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", background: "var(--surface)" }}>
               <div style={{ padding: "10px 16px", background: "var(--bg-2)", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div className="row" style={{ gap: 8 }}>
@@ -182,7 +196,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
     if (activeSection === "law") {
       return (
         <div className="col" style={{ gap: 12 }}>
-          {brief.applicableLaw?.map((law: any, i: number) => (
+          {brief.applicableLaw?.map((law, i) => (
             <div key={i} style={{ padding: 14, border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface)" }}>
               <div className="row" style={{ gap: 8, marginBottom: 8 }}>
                 <BookIcon />
@@ -197,18 +211,18 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
 
     if (activeSection === "precedents") {
       if (precedents === undefined) return <div className="muted" style={{ fontSize: 13 }}>Loading precedents…</div>;
-      const listed = precedents?.filter(Boolean) ?? [];
+      const listed = precedents?.filter((p): p is Doc<"precedents"> => p !== null) ?? [];
       if (listed.length === 0) return <div className="muted" style={{ fontSize: 13 }}>No precedents cited in the curated set for this case.</div>;
       return (
         <div className="col" style={{ gap: 10 }}>
-          {listed.map((p: any) => (
+          {listed.map((p) => (
             <div key={p._id} style={{ padding: 14, border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface)" }}>
               <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="serif" style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.25 }}>{p.title}</div>
                   <div className="case-id" style={{ marginTop: 4 }}>{p.citation} · {p.commission} · {p.year}</div>
                 </div>
-                <span className="badge green">{p.category || "Allowed"}</span>
+                <span className="badge green">{p.outcome || "Cited"}</span>
               </div>
               <p style={{ margin: "10px 0 0", fontSize: 13, lineHeight: 1.6, color: "var(--text-2)" }}>{p.summary}</p>
             </div>
@@ -321,7 +335,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
           <div className="serif" style={{ fontSize: 17, fontWeight: 500, lineHeight: 1.25 }}>Consumer Protection Act, 2019</div>
           <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "12px 0" }} />
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.7, fontFamily: "var(--serif)" }}>
-            <strong>(11) "deficiency"</strong> means any fault, imperfection, shortcoming or inadequacy in the quality, nature and manner of performance which is required to be maintained by or under any law for the time being in force or has been undertaken to be performed by a person in pursuance of a contract or otherwise in relation to any service…
+            <strong>(11) &quot;deficiency&quot;</strong> means any fault, imperfection, shortcoming or inadequacy in the quality, nature and manner of performance which is required to be maintained by or under any law for the time being in force or has been undertaken to be performed by a person in pursuance of a contract or otherwise in relation to any service…
           </p>
           <button className="btn sm" style={{ marginTop: 12 }}><ExternalIcon /> Open full text</button>
         </div>

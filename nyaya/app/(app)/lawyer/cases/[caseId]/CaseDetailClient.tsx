@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CASE_CATEGORIES } from "@/lib/caseCategories";
@@ -33,19 +33,19 @@ function LockIcon() {
   return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 // ── Sub-components ─────────────────────────────────────────
 function QAEntry({
   entry,
-  index,
-  prefix,
   disabled,
   onSave,
 }: {
-  entry: any;
-  index: number;
-  prefix: string;
+  entry: Doc<"qaEntries">;
   disabled: boolean;
-  onSave: (text: string) => Promise<void> | void;
+  onSave: (text: string) => Promise<unknown> | unknown;
 }) {
   const [text, setText] = useState(entry.answerText || "");
   const [saved, setSaved] = useState(false);
@@ -132,7 +132,7 @@ export default function CaseDetailClient({
     if (computedSide) {
       initializeSession({ caseId, side: computedSide, category: caseData.category })
         .then(() => setInitialized(true))
-        .catch((e) => setError(String(e)));
+        .catch((e: unknown) => setError(getErrorMessage(e, "Could not initialize Q&A session.")));
     } else {
       setInitialized(true);
     }
@@ -153,10 +153,25 @@ export default function CaseDetailClient({
     );
   }
 
+  if (!caseData) {
+    return (
+      <div className="qa-shell">
+        <aside className="qa-side" />
+        <main className="qa-main">
+          <div className="card" style={{ padding: 24 }}>
+            <div className="serif" style={{ fontSize: 18, fontWeight: 500, marginBottom: 8 }}>Case not found</div>
+            <p className="muted" style={{ fontSize: 13 }}>This matter is unavailable or may have been removed.</p>
+          </div>
+        </main>
+        <aside className="qa-side right" />
+      </div>
+    );
+  }
+
   const categoryLabel = CASE_CATEGORIES.find(c => c.id === caseData.category)?.label || caseData.category;
   const submitted = session?.status === "SUBMITTED";
   const active = entries?.[activeIdx];
-  const completedCount = entries?.filter((e: any) => e.answerText && e.answerText.trim().length >= 10).length ?? 0;
+  const completedCount = entries?.filter((e) => e.answerText && e.answerText.trim().length >= 10).length ?? 0;
   const totalCount = entries?.length ?? 0;
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
@@ -164,14 +179,14 @@ export default function CaseDetailClient({
     if (!session?._id) return;
     setError("");
     try { await submitSession({ sessionId: session._id }); }
-    catch (e: any) { setError(e?.message || "Submit failed"); }
+    catch (e: unknown) { setError(getErrorMessage(e, "Submit failed")); }
   };
 
   const handleGenerateBrief = async () => {
     setGenerating(true);
     setError("");
     try { await generateBrief({ caseId }); }
-    catch (e: any) { setError(e?.message || "Brief generation failed"); }
+    catch (e: unknown) { setError(getErrorMessage(e, "Brief generation failed")); }
     finally { setGenerating(false); }
   };
 
@@ -214,7 +229,7 @@ export default function CaseDetailClient({
               {entries === undefined && (
                 <div style={{ padding: "12px 6px", fontSize: 12, color: "var(--text-4)" }}>Loading…</div>
               )}
-              {entries?.map((entry: any, i: number) => {
+              {entries?.map((entry, i) => {
                 const answered = entry.answerText && entry.answerText.trim().length >= 10;
                 return (
                   <div
@@ -333,8 +348,6 @@ export default function CaseDetailClient({
 
               <QAEntry
                 entry={active}
-                index={activeIdx}
-                prefix={side === "COMPLAINANT" ? "C" : "O"}
                 disabled={submitted}
                 onSave={(text) => updateAnswer({ entryId: active._id, answerText: text })}
               />
@@ -346,7 +359,7 @@ export default function CaseDetailClient({
                 <button
                   className="btn primary"
                   onClick={handleSubmit}
-                  disabled={!entries || entries.some((e: any) => !e.answerText || e.answerText.trim().length < 10)}
+                  disabled={!entries || entries.some((e) => !e.answerText || e.answerText.trim().length < 10)}
                 >
                   <SendIcon /> Submit my side
                 </button>

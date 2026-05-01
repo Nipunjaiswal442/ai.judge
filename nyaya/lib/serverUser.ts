@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { normalizeRole } from "@/lib/authRoles";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -11,10 +12,7 @@ export const getServerUser = cache(async () => {
     const clerkUser = await currentUser();
     if (!clerkUser) return null;
 
-    const role = (
-      ((clerkUser.publicMetadata?.role || clerkUser.unsafeMetadata?.role || "LAWYER") as string)
-        .toUpperCase()
-    ) as "JUDGE" | "LAWYER";
+    const role = normalizeRole(clerkUser.publicMetadata?.role || clerkUser.unsafeMetadata?.role);
 
     const email = clerkUser.emailAddresses[0]?.emailAddress || "";
     const name =

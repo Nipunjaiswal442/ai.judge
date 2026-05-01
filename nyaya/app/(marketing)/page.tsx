@@ -883,7 +883,7 @@ export default function LandingPage() {
             <span className="tech-pill">Next.js 15</span>
             <span className="tech-pill">TypeScript</span>
             <span className="tech-pill">Convex</span>
-            <span className="tech-pill">NextAuth.js</span>
+            <span className="tech-pill">Clerk</span>
             <span className="tech-pill">Tailwind CSS</span>
             <span className="tech-pill">shadcn/ui</span>
             <span className="tech-pill">DeepSeek V2 via NVIDIA NIM</span>

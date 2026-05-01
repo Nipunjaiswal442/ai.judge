@@ -30,7 +30,7 @@ Consumer district commissions in India face immense backlogs. A core bottleneck 
 - **Framework**: [Next.js 15](https://nextjs.org/) (App Router, React 19)
 - **Database & Realtime**: [Convex](https://convex.dev/) (with builtin vector search)
 - **LLM Orchestration**: NVIDIA NIM ([DeepSeek-v3.2](https://build.nvidia.com/deepseek-ai/deepseek-v3.2)) enforced JSON modeling.
-- **Authentication**: [NextAuth (Auth.js v5 beta)](https://authjs.dev/) with Google OAuth + Credentials.
+- **Authentication**: [Clerk](https://clerk.com/) with Google OAuth + email/password.
 - **UI/UX**: [Tailwind CSS v4](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
 
 ---
@@ -61,17 +61,15 @@ Ensure the following variables are present in your `.env.local`:
 # Convex Deployment
 NEXT_PUBLIC_CONVEX_URL="https://your-convex-url.convex.cloud"
 
-# Auth.js
-AUTH_SECRET="generate-a-secure-random-string-here"
-# Add your Google Client details if evaluating OAuth
-AUTH_GOOGLE_ID="your_google_id"
-AUTH_GOOGLE_SECRET="your_google_secret"
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_or_live_..."
+CLERK_SECRET_KEY="sk_test_or_live_..."
 
 # NVIDIA AI
 NVIDIA_API_KEY="nvapi-your-key-here"
 ```
 
-> On Vercel, also set `AUTH_TRUST_HOST=true` (required by Auth.js v5 on custom domains) and `CONVEX_DEPLOY_KEY` if you use `npx convex deploy` in the build step. `NEXTAUTH_URL` is auto-inferred from `VERCEL_URL` but can be set explicitly if you use a custom domain.
+> On Vercel, set the same Clerk and Convex environment variables for the production deployment. In the Clerk dashboard, add your Vercel production domain to the allowed origins/redirects for OAuth.
 
 ### 3. Initialize Database (Convex)
 In a separate terminal, run Convex to sync your database schema and push serverless functions:
@@ -93,7 +91,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 1. Connect your GitHub repository to Vercel.
 2. **IMPORTANT: Set the "Root Directory" to `nyaya`**. Since the Next.js application is inside a subfolder, Vercel will throw a `404 NOT_FOUND` error if you skip this step.
-3. In Vercel Project Settings, add **all** the environment variables listed above, including `AUTH_TRUST_HOST=true`. **If you skip `NEXT_PUBLIC_CONVEX_URL`, `AUTH_SECRET`, or `AUTH_TRUST_HOST`, sign-in will fail silently in production.**
+3. In Vercel Project Settings, add **all** the environment variables listed above. **If you skip `NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, or `CLERK_SECRET_KEY`, sign-in will fail in production.**
 4. Modify your build command in Vercel to sync Convex schema prior to next build:
    - **Build Command**: `npx convex deploy && next build`
 5. Deploy!

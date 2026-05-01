@@ -31,7 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInFallbackRedirectUrl="/auth/complete"
+      signUpFallbackRedirectUrl="/auth/complete"
+    >
       <html lang="en" suppressHydrationWarning>
         <body
           className={`${inter.variable} ${fraunces.variable} ${jetBrainsMono.variable} font-sans antialiased bg-background text-foreground`}

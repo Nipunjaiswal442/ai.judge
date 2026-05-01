@@ -1,10 +1,12 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useSignUp } from "@clerk/nextjs/legacy";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Chakra from "@/components/ui/chakra";
+import { dashboardForRole, normalizeRole } from "@/lib/authRoles";
 
 function ArrowRIcon() {
   return (
@@ -14,11 +16,33 @@ function ArrowRIcon() {
   );
 }
 
+type ClerkLikeError = {
+  errors?: Array<{ longMessage?: string; message?: string }>;
+  message?: string;
+};
+
+type RegisterResponse = {
+  error?: string;
+  dashboardUrl?: string;
+  role?: string;
+};
+
+function getErrorMessage(error: unknown, fallback: string) {
+  const clerkError = error as ClerkLikeError;
+  return (
+    clerkError.errors?.[0]?.longMessage ||
+    clerkError.errors?.[0]?.message ||
+    clerkError.message ||
+    fallback
+  );
+}
+
 function SignUpContent() {
   const searchParams = useSearchParams();
-  const rolePrefix = searchParams.get("role") || "LAWYER";
+  const rolePrefix = normalizeRole(searchParams.get("role"));
   const router = useRouter();
   const { signUp, setActive, isLoaded } = useSignUp();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,11 +51,17 @@ function SignUpContent() {
   const [error, setError] = useState("");
 
   const roleLabel = rolePrefix === "JUDGE" ? "Judge" : "Counsel";
-  const dashboardUrl = rolePrefix === "JUDGE" ? "/judge/dashboard" : "/lawyer/dashboard";
+  const dashboardUrl = dashboardForRole(rolePrefix);
+
+  useEffect(() => {
+    if (authLoaded && isSignedIn) {
+      router.replace(`/auth/complete?role=${rolePrefix}`);
+    }
+  }, [authLoaded, isSignedIn, rolePrefix, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded) return;
+    if (!isLoaded || isSignedIn) return;
     setLoading(true);
     setError("");
 
@@ -50,21 +80,26 @@ function SignUpContent() {
         await setActive({ session: result.createdSessionId });
 
         // Step 3: Create Convex user + set Clerk publicMetadata
-        await fetch("/api/auth/register", {
+        const response = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, role: rolePrefix }),
         });
+        const data = (await response.json().catch(() => ({}))) as RegisterResponse;
 
-        router.push(dashboardUrl);
+        if (!response.ok) {
+          throw new Error(data.error || "Account was created, but setup could not be completed.");
+        }
+
+        router.replace(data.dashboardUrl || dashboardUrl);
         router.refresh();
       } else {
         // Should not happen when email verification is disabled in Clerk dashboard
         setError("Sign-up requires verification. Check your email.");
         setLoading(false);
       }
-    } catch (err: any) {
-      setError(err.errors?.[0]?.longMessage || err.errors?.[0]?.message || "Registration failed. Please try again.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Registration failed. Please try again."));
       setLoading(false);
     }
   };

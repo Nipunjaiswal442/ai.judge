@@ -1,11 +1,12 @@
 "use client";
 
-import { useSignIn } from "@clerk/nextjs/legacy";
 import { useAuth } from "@clerk/nextjs";
-import { useState, Suspense, useEffect } from "react";
+import { useSignIn } from "@clerk/nextjs/legacy";
+import { useState, Suspense, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Chakra from "@/components/ui/chakra";
+import { dashboardForRole, searchRoleToSignInKey, signInRoleKeyToAppRole } from "@/lib/authRoles";
 
 function ScaleIcon({ size = 16 }: { size?: number }) {
   return (
@@ -59,59 +60,126 @@ const ROLES = [
   { key: "opposing_lawyer",    label: "Opposing Counsel",    desc: "Defending opposite party",     icon: <UsersIcon /> },
 ];
 
+type ClerkLikeError = {
+  errors?: Array<{ longMessage?: string; message?: string }>;
+  message?: string;
+};
+
+type RegisterResponse = {
+  error?: string;
+  dashboardUrl?: string;
+  role?: string;
+};
+
+function getErrorMessage(error: unknown, fallback: string) {
+  const clerkError = error as ClerkLikeError;
+  return (
+    clerkError.errors?.[0]?.longMessage ||
+    clerkError.errors?.[0]?.message ||
+    clerkError.message ||
+    fallback
+  );
+}
+
+async function syncSignedInUser(roleKey: string) {
+  const appRole = signInRoleKeyToAppRole(roleKey);
+  const response = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role: appRole }),
+  });
+  const data = (await response.json().catch(() => ({}))) as RegisterResponse;
+
+  if (!response.ok) {
+    throw new Error(data.error || "Could not finish account setup.");
+  }
+
+  return data.dashboardUrl || dashboardForRole(data.role || appRole);
+}
+
 function SignInContent() {
   const { signIn, setActive, isLoaded } = useSignIn();
-  const { isSignedIn } = useAuth();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const fromApp = searchParams.get("from") === "app";
-  const [role, setRole] = useState("judge");
+  const [role, setRole] = useState(() => searchRoleToSignInKey(searchParams.get("role")));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
+  const syncStartedRef = useRef(false);
 
   useEffect(() => {
-    if (isSignedIn && !fromApp) router.replace("/lawyer/dashboard");
-  }, [isSignedIn, fromApp, router]);
+    setRole(searchRoleToSignInKey(searchParams.get("role")));
+  }, [searchParams]);
 
   const selectedRole = ROLES.find(r => r.key === role)!;
-  const dashboardUrl = role === "judge" ? "/judge/dashboard" : "/lawyer/dashboard";
+  const appRole = signInRoleKeyToAppRole(role);
+
+  const finishSignedInSession = useCallback(async () => {
+    if (syncStartedRef.current) return;
+    syncStartedRef.current = true;
+    setSyncing(true);
+    setError("");
+
+    try {
+      const destination = await syncSignedInUser(role);
+      router.replace(destination);
+      router.refresh();
+    } catch (err: unknown) {
+      syncStartedRef.current = false;
+      setError(getErrorMessage(err, "You are signed in, but account setup could not be completed."));
+      setSyncing(false);
+    }
+  }, [role, router]);
+
+  useEffect(() => {
+    if (authLoaded && isSignedIn) void finishSignedInSession();
+  }, [authLoaded, isSignedIn, finishSignedInSession]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded) return;
+    if (!isLoaded || syncing) return;
     setLoading(true);
     setError("");
     try {
       const result = await signIn.create({ identifier: email, password });
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push(dashboardUrl);
+        const destination = await syncSignedInUser(role);
+        router.replace(destination);
+        router.refresh();
       } else {
         setError("Sign-in could not be completed. Please try again.");
       }
-    } catch (err: any) {
-      setError(err.errors?.[0]?.longMessage || err.errors?.[0]?.message || "Invalid email or password.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Invalid email or password."));
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    if (!isLoaded) return;
+    if (!isLoaded || syncing) return;
+    if (isSignedIn) {
+      await finishSignedInSession();
+      return;
+    }
+
     setGoogleLoading(true);
     setError("");
     try {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
-        redirectUrl: `${window.location.origin}/sso-callback`,
-        redirectUrlComplete: `${window.location.origin}${dashboardUrl}`,
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: `/auth/complete?role=${appRole}`,
+        continueSignIn: true,
+        continueSignUp: true,
       });
-    } catch (err: any) {
-      const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || err?.message || "Google sign-in failed.";
-      setError(msg);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Google sign-in failed."));
       setGoogleLoading(false);
     }
   };
@@ -191,9 +259,9 @@ function SignInContent() {
                 <ShieldIcon /> Judicial accounts require admin verification (simulated in MVP)
               </p>
             )}
-            <button type="submit" className="btn primary lg" style={{ width: "100%", justifyContent: "center", marginTop: 22 }} disabled={loading || !isLoaded}>
-              {loading ? "Signing in…" : `Sign in as ${selectedRole.label}`}
-              {!loading && <ArrowRIcon />}
+            <button type="submit" className="btn primary lg" style={{ width: "100%", justifyContent: "center", marginTop: 22 }} disabled={loading || syncing || !isLoaded}>
+              {loading || syncing ? "Signing in…" : `Sign in as ${selectedRole.label}`}
+              {!(loading || syncing) && <ArrowRIcon />}
             </button>
           </form>
 
@@ -203,8 +271,8 @@ function SignInContent() {
             <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
           </div>
 
-          <button className="btn lg" style={{ width: "100%", justifyContent: "center" }} onClick={handleGoogleSignIn} disabled={googleLoading || loading || !isLoaded} type="button">
-            <GoogleIcon /> {googleLoading ? "Redirecting…" : "Continue with Google"}
+          <button className="btn lg" style={{ width: "100%", justifyContent: "center" }} onClick={handleGoogleSignIn} disabled={googleLoading || loading || syncing || !isLoaded} type="button">
+            <GoogleIcon /> {googleLoading || syncing ? "Redirecting…" : "Continue with Google"}
           </button>
 
           <p className="help" style={{ marginTop: 24, lineHeight: 1.6 }}>
