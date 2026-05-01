@@ -1,8 +1,8 @@
 "use client";
 
-import { useSignIn } from "@clerk/nextjs/legacy";
-import { useState, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useSignIn, useAuth } from "@clerk/nextjs/legacy";
+import { useState, Suspense, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Chakra from "@/components/ui/chakra";
 
@@ -60,13 +60,20 @@ const ROLES = [
 
 function SignInContent() {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const { isSignedIn } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromApp = searchParams.get("from") === "app";
   const [role, setRole] = useState("judge");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isSignedIn && !fromApp) router.replace("/lawyer/dashboard");
+  }, [isSignedIn, fromApp, router]);
 
   const selectedRole = ROLES.find(r => r.key === role)!;
   const dashboardUrl = role === "judge" ? "/judge/dashboard" : "/lawyer/dashboard";

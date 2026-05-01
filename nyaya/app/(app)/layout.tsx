@@ -70,7 +70,7 @@ function InfoIcon() {
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getServerUser();
-  if (!user) redirect("/sign-in");
+  if (!user) redirect("/sign-in?from=app");
 
   const isJudge = user.role === "JUDGE";
 
