@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Convex-DB-FF6F00?style=for-the-badge" alt="Convex" />
   <img src="https://img.shields.io/badge/DeepSeek--v3.2-NVIDIA_NIM-76B900?style=for-the-badge&logo=nvidia" alt="NVIDIA NIM" />
   <img src="https://img.shields.io/badge/Auth.js-v5_beta-7C3AED?style=for-the-badge" alt="Auth.js" />
-  <img src="https://img.shields.io/badge/Tailwind-v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind v4" />
+  <img src="https://img.shields.io/badge/CSS_Design_System-Custom-0a1f44?style=for-the-badge" alt="Custom Design System" />
 </p>
 
 <h1 align="center">न्याय · Nyāya</h1>
@@ -15,7 +15,7 @@
 
 > **⚠️ ADVISORY ONLY — NOT LEGAL ADVICE**
 >
-> Nyāya produces structured analysis to assist human review. It does **not** render verdicts, replace legal counsel, or substitute for judicial reasoning. This is an independent academic project by a VIT-AP student; it is not affiliated with any court, bar council, or government body.
+> Nyāya produces structured analysis to assist human review. It does **not** render verdicts, replace legal counsel, or substitute for judicial reasoning. This is an independent academic project; it is not affiliated with any court, bar council, or government body.
 
 ---
 
@@ -24,6 +24,7 @@
 - [The Problem](#-the-problem)
 - [The Solution](#-the-solution)
 - [Key Features](#-key-features)
+- [UI Design System](#-ui-design-system)
 - [System Architecture](#-system-architecture)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
@@ -65,12 +66,12 @@ No neutral structuring layer exists between lawyers and judges.
 ## ✨ Key Features
 
 ### Role-Based Workspaces
-- **Lawyer Dashboard** — File new cases, complete guided Q&A sessions, upload supporting documents, track case status
-- **Judge Dashboard** — View assigned cases, read AI-generated analysis briefs, ask follow-up questions via Bench Assistant, acknowledge reviews
+- **Lawyer Dashboard** — Stats tiles, case table with progress bars, filter/search, file new cases, track matter status
+- **Judge Dashboard** — Assigned case queue with priority card, bench assistant chat, brief review workflow
 
 ### Dynamic Legal Scaffolding
-- Hardcoded CPA case categories (Defective Goods, Deficient Services, Unfair Trade Practices, E-commerce Disputes, Misleading Advertisements, Medical Negligence)
-- Each category maps to curated evidentiary questions for both complainant and opposing counsel
+- 6 CPA case categories (Defective Goods, Deficient Services, Unfair Trade Practices, E-commerce, Misleading Ads, Medical Negligence)
+- Each category maps to 6+6 curated evidentiary questions for both parties
 
 ### AI Analysis Brief (8 Sections)
 1. **Case Summary** — Neutral overview of the dispute
@@ -80,15 +81,84 @@ No neutral structuring layer exists between lawyers and judges.
 5. **Cited Precedents** — From a curated, verified set (no hallucinated citations)
 6. **Procedural Flags** — Limitation, jurisdiction, or procedural issues
 7. **Evidentiary Gaps** — Missing evidence or unanswered questions
-8. **Caveats** — Explicit disclaimers and confidence scoring
+8. **Caveats & Confidence** — Explicit disclaimers and model confidence scoring
+
+### 3-Pane Q&A Interface
+- **Left**: question navigator grouped by side (Complainant / Opposing), completion badges, overall progress bar
+- **Center**: active question with editable answer area (auto-save on blur) or locked submitted view, AI follow-up notes
+- **Right**: parties panel, case details, Nyāya assistant hint
+
+### 3-Pane Brief Viewer
+- **Left TOC**: numbered section list with confidence dots, confidence ring display, bench action buttons (Acknowledge / Flag / Export PDF)
+- **Center**: section body with section-type-aware rendering (prose, checklist, side-by-side, law clauses, precedent cards, procedural flags grid), private judge notes
+- **Right Source Viewer**: model trace, statute text, or cited precedent with key paragraph
+
+### 4-Step New Case Wizard
+- **Step 0** — Category selection (6 cards with icon + name + desc), Q&A template preview
+- **Step 1** — Parties & metadata (2-col grid: names, addresses, jurisdiction, claim, relief)
+- **Step 2** — Invite opposing counsel (email, Bar ID, deadline, email preview panel)
+- **Step 3** — Review & confirm (summary grid, advisory acknowledgment, file CTA)
 
 ### Judge Bench Assistant
 - Interactive Q&A powered by DeepSeek v3.2 for case-specific synthesis
 - Grounded only in submitted material — never fabricates
 
-### Full Traceability & Audit
-- Every AI claim traces back to raw lawyer submissions or certified precedents
-- Audit logging for all user actions
+---
+
+## 🎨 UI Design System
+
+Nyāya uses a fully custom CSS design system (no Tailwind in the app shell) with a lawyer-grade aesthetic built for long-form document work.
+
+### Design Tokens
+
+```css
+/* Navy palette */
+--navy-950: #020c1b;   --navy-900: #0a1f44;   --navy-800: #0f2d5e;
+--navy-700: #133578;   --navy-600: #1a4491;
+
+/* Warm paper base */
+--paper: #fbfaf6;      --ink-1: #1a1915;      --ink-2: #2e2d29;
+
+/* Semantic aliases (theme-aware) */
+--bg: var(--paper);    --surface: #ffffff;
+--primary: var(--navy-900);
+--serif: 'Fraunces', Georgia, serif;
+--mono: 'JetBrains Mono', monospace;
+```
+
+### App Shell
+
+```
+┌─ Topbar (56px) ─────────────────────────────────────────────┐
+│  Chakra mark + Nyāya   │   Breadcrumb   │   User chip       │
+├─ Sidebar (240px) ───────┬───────────────────────────────────┤
+│  Nav links (role-based) │   Content area (scrollable)       │
+│  Advisory pill footer   │   .page or .qa-shell / .brief-    │
+│                         │   shell (full-height 3-pane)      │
+└─────────────────────────┴───────────────────────────────────┘
+```
+
+### Key CSS Classes
+
+| Class | Description |
+|-------|-------------|
+| `.app` | Root grid: `56px 1fr` rows, `100vh` height |
+| `.main` | Sidebar + content grid: `240px 1fr` |
+| `.qa-shell` | 3-pane Q&A: `280px 1fr 320px` |
+| `.brief-shell` | 3-pane brief: `320px 1fr 1fr` |
+| `.signin` | Split auth: `1.1fr 1fr` |
+| `.page` | Padded content container with `max-width: 1400px` |
+| `.card`, `.stat` | Surface cards and metric tiles |
+| `.tbl` | Full-width data table with hover rows |
+| `.badge` | Status badges with dot indicator and tone variants |
+| `.btn` | Button system (ghost / primary / sm / lg) |
+| `.stepper` | Step-pip progress indicator |
+| `.cat-grid`, `.cat-card` | Category selection grid |
+| `.bar` | Progress bar with color variants |
+
+### Ashoka Chakra Brand Mark
+
+A reusable `<Chakra />` SVG component (`components/ui/chakra.tsx`) renders a 24-spoke Ashoka Chakra at configurable size and stroke weight. Used in topbar, sign-in art panel, and as decorative watermarks.
 
 ---
 
@@ -97,8 +167,8 @@ No neutral structuring layer exists between lawyers and judges.
 ```
 ┌───────────────────────────────────────────────────────────┐
 │                     Client (Browser)                       │
-│  Next.js 15 App Router  ·  React 19  ·  Tailwind v4       │
-│  shadcn/ui  ·  Lucide Icons                               │
+│  Next.js 15 App Router  ·  React 19  ·  Custom CSS DS     │
+│  Convex React SDK  ·  NextAuth client hooks               │
 └──────────────┬──────────────────────┬─────────────────────┘
                │                      │
                ▼                      ▼
@@ -128,12 +198,11 @@ No neutral structuring layer exists between lawyers and judges.
 |-------|-----------|---------|
 | **Framework** | [Next.js 15](https://nextjs.org/) (App Router + Turbopack) | Server components, API routes, SSR |
 | **UI** | [React 19](https://react.dev/) | Component rendering |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) | Design system |
+| **Styling** | Custom CSS design system + [shadcn/ui](https://ui.shadcn.com/) | Navy/paper lawyer aesthetic, utility classes |
 | **Database** | [Convex](https://convex.dev/) | Realtime DB, serverless functions, vector search, file storage |
 | **LLM** | [NVIDIA NIM](https://build.nvidia.com/) (DeepSeek v3.2) | Brief generation, judge synthesis, JSON-enforced outputs |
 | **Auth** | [Auth.js v5 beta](https://authjs.dev/) | Google OAuth + email/password credentials |
 | **Validation** | [Zod](https://zod.dev/) | Runtime type checking |
-| **Icons** | [Lucide React](https://lucide.dev/) | SVG icon library |
 
 ---
 
@@ -141,34 +210,41 @@ No neutral structuring layer exists between lawyers and judges.
 
 ```
 ai.judge/
-├── README.md                  ← You are here
-├── CourtroomSimulation.jsx     ← Standalone courtroom simulation component
+├── README.md
 └── nyaya/                     ← Main Next.js application
     ├── app/
-    │   ├── (marketing)/       ← Landing page
-    │   ├── (auth)/            ← Sign-in / Sign-up pages
-    │   ├── (app)/             ← Authenticated app
-    │   │   ├── lawyer/        ← Lawyer dashboard & case management
-    │   │   └── judge/         ← Judge dashboard & brief review
-    │   └── api/
-    │       └── auth/          ← NextAuth routes + registration
-    ├── components/ui/         ← shadcn/ui components
-    ├── convex/                ← Backend (Convex)
-    │   ├── schema.ts          ← Database schema (7 tables)
-    │   ├── cases.ts           ← Case CRUD operations
-    │   ├── qa.ts              ← Q&A session management
-    │   ├── analysis.ts        ← Brief generation orchestration
-    │   ├── judge.ts           ← Judge-specific queries
-    │   ├── precedents.ts      ← Precedent management & vector search
-    │   ├── users.ts           ← User management
-    │   └── audit.ts           ← Audit logging
-    ├── lib/
-    │   ├── auth.ts            ← NextAuth configuration
-    │   ├── llm.ts             ← NVIDIA NIM / DeepSeek integration
-    │   ├── caseCategories.ts  ← CPA categories & question templates
-    │   ├── prompts/           ← LLM system prompts
-    │   └── seedData/          ← Precedent seed data
-    └── docs/                  ← Documentation
+    │   ├── globals.css         ← Full custom design system (tokens + utility classes)
+    │   ├── (marketing)/        ← Landing page
+    │   ├── (auth)/
+    │   │   ├── sign-in/        ← Split-panel: role selector cards + form
+    │   │   └── sign-up/        ← Split-panel: registration form
+    │   └── (app)/
+    │       ├── layout.tsx      ← App shell: topbar + sidebar (role-based nav)
+    │       ├── lawyer/
+    │       │   ├── dashboard/  ← Stats tiles + case table + activity feed
+    │       │   └── cases/
+    │       │       ├── new/    ← 4-step case filing wizard
+    │       │       └── [caseId]/ ← 3-pane Q&A interface
+    │       └── judge/
+    │           ├── dashboard/  ← Stats + case queue + priority card + bench assistant
+    │           └── cases/
+    │               └── [caseId]/ ← 3-pane analysis brief viewer
+    ├── components/ui/
+    │   └── chakra.tsx          ← Ashoka Chakra SVG brand mark (24 spokes)
+    ├── convex/                 ← Convex backend
+    │   ├── schema.ts           ← Database schema (7 tables)
+    │   ├── cases.ts            ← Case CRUD
+    │   ├── qa.ts               ← Q&A session management
+    │   ├── analysis.ts         ← Brief generation orchestration
+    │   ├── judge.ts            ← Judge-specific queries
+    │   ├── precedents.ts       ← Precedent management & vector search
+    │   ├── users.ts            ← User management
+    │   └── audit.ts            ← Audit logging
+    └── lib/
+        ├── auth.ts             ← NextAuth configuration
+        ├── llm.ts              ← NVIDIA NIM / DeepSeek integration
+        ├── caseCategories.ts   ← CPA categories & Q&A question templates
+        └── prompts/            ← LLM system prompts
 ```
 
 ---
@@ -288,10 +364,10 @@ flowchart LR
 
 | Step | Actor | What Happens |
 |------|-------|-------------|
-| **1. File** | Complainant Lawyer | Selects category, enters party details, specifies relief. System generates case ID and invites opposing counsel. |
-| **2. Q&A** | Both Lawyers | Each side answers category-specific guided questions. Attach documents per answer. Neither side sees the other's draft. |
-| **3. Brief** | AI Engine | Once both sides submit, generates an 8-section analysis brief with confidence scoring and explicit caveats. |
-| **4. Review** | Judge | Reviews the brief, accesses source material, uses Bench Assistant for follow-up questions, acknowledges the case. |
+| **1. File** | Complainant Lawyer | Selects category via card grid, enters party details in 2-col form, optionally invites opposing counsel — system auto-generates case ID. |
+| **2. Q&A** | Both Lawyers | Each side works through 6 guided questions in a 3-pane interface. Answers auto-save on blur. Neither side sees the other's draft until submission. |
+| **3. Brief** | AI Engine | Once both sides submit, the complainant triggers brief generation. DeepSeek v3.2 produces an 8-section JSON brief with confidence scoring. |
+| **4. Review** | Judge | Reviews the 3-pane brief (TOC → section body → source viewer), uses Bench Assistant for follow-up, acknowledges to advance the case. |
 
 ---
 
@@ -299,11 +375,12 @@ flowchart LR
 
 | Principle | Implementation |
 |-----------|---------------|
-| **Advisory posture** | Explicit, un-hideable caveats on every AI output. Zero verdict generation. Low confidence flags. |
-| **Traceability** | Every AI claim links to raw lawyer submissions or curated precedents. No hallucinated citations. |
+| **Advisory posture** | Explicit, un-hideable caveats on every AI output. Zero verdict generation. Confidence ring on brief TOC. |
+| **Traceability** | Every AI claim links to raw lawyer submissions or curated precedents. Source viewer panel in brief viewer. |
 | **Neutrality** | Platform serves both sides equally. Neither party sees the other's draft until submission. |
 | **Auditability** | All user actions logged with timestamps for transparency. |
-| **Human-in-the-loop** | Judges make all decisions. AI structures information, never recommends outcomes. |
+| **Human-in-the-loop** | Judges make all decisions. AI structures information, never recommends outcomes. Acknowledge button is the only judicial action. |
+| **Accessible density** | Custom CSS design system — navy/paper palette, Fraunces serif for headings, JetBrains Mono for case IDs. Dense tables with hover states, not cards everywhere. |
 
 ---
 
@@ -330,8 +407,6 @@ This project is open source and available for academic and educational purposes.
 <p align="center">
   <br/>
   <strong>Built with ❤️ by <a href="https://github.com/Nipunjaiswal442">Nipun Jaiswal</a></strong>
-  <br/>
-  <em>VIT-AP University</em>
   <br/><br/>
   <sub>न्यायमूलं प्रजासुखम् — The happiness of the people is rooted in justice.</sub>
 </p>

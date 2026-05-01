@@ -2,20 +2,24 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-
 import { Suspense } from "react";
+import Chakra from "@/components/ui/chakra";
+
+function ArrowRIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14M13 5l7 7-7 7"/>
+    </svg>
+  );
+}
 
 function SignUpContent() {
   const searchParams = useSearchParams();
   const rolePrefix = searchParams.get("role") || "LAWYER";
   const router = useRouter();
-  
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +30,7 @@ function SignUpContent() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
+
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -35,18 +39,14 @@ function SignUpContent() {
       });
 
       const data = await res.json();
-      
+
       if (!res.ok) {
         setError(data.error || "Something went wrong");
         setLoading(false);
         return;
       }
-      
-      const signInRes = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
+
+      const signInRes = await signIn("credentials", { email, password, redirect: false });
 
       if (signInRes?.error) {
         setError("Registered, but auto sign-in failed. Please sign in manually.");
@@ -57,79 +57,130 @@ function SignUpContent() {
 
       router.push(rolePrefix === "JUDGE" ? "/judge/dashboard" : "/lawyer/dashboard");
       router.refresh();
-    } catch (err) {
+    } catch {
       setError("Registration failed. Please try again.");
       setLoading(false);
     }
   };
 
+  const roleLabel = rolePrefix === "JUDGE" ? "Judge" : "Counsel";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#061735] via-[#0a1f44] to-[#1e3a8a] p-4 text-slate-100">
-      <Card className="w-full max-w-md bg-white border-slate-200 text-slate-900 shadow-xl rounded-xl">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-heading font-bold text-primary">Nyāya</CardTitle>
-          <CardDescription className="text-slate-500 font-sans">
-            Register as a {rolePrefix.toLowerCase()}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && <div className="p-3 bg-red-50 text-red-500 text-sm rounded-md border border-red-200">{error}</div>}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-700">Full Name</Label>
-              <Input 
-                id="name" 
-                placeholder="Ramesh Kumar" 
-                required 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+    <div className="signin">
+      {/* ── Left art panel ── */}
+      <div className="signin-art">
+        <Chakra
+          size={520}
+          strokeWidth={0.6}
+          style={{ position: "absolute", top: -120, right: -120, opacity: 0.10, color: "white" }}
+        />
+
+        <div className="row" style={{ gap: 10, alignItems: "center", position: "relative" }}>
+          <Chakra size={28} strokeWidth={1.4} style={{ color: "white" }} />
+          <div style={{ fontFamily: "var(--serif)", fontWeight: 600, fontSize: 20, letterSpacing: "-0.02em", color: "white" }}>
+            Nyāya <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 400 }}>न्याय</span>
+          </div>
+        </div>
+
+        <div style={{ marginTop: "auto", maxWidth: 480, position: "relative" }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)", marginBottom: 16 }}>
+            Join the workspace
+          </div>
+          <h1 className="serif" style={{ fontSize: 52, fontWeight: 400, lineHeight: 1.05, letterSpacing: "-0.025em", margin: 0, color: "white" }}>
+            Structured submissions.<br />
+            <span style={{ fontStyle: "italic", color: "rgba(255,255,255,0.7)" }}>Faster hearings.</span>
+          </h1>
+          <p style={{ marginTop: 24, color: "rgba(255,255,255,0.7)", fontSize: 15, lineHeight: 1.6, maxWidth: 440 }}>
+            Register your {roleLabel.toLowerCase()} account to access guided Q&A, document management, and AI-assisted case analysis.
+          </p>
+        </div>
+
+        <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)", fontSize: 11, position: "relative" }}>
+          Academic / portfolio MVP · Not for production deployment without legal review
+        </div>
+      </div>
+
+      {/* ── Right form panel ── */}
+      <div className="signin-form">
+        <div style={{ width: "100%", maxWidth: 380 }}>
+          <h2 className="serif" style={{ fontSize: 28, fontWeight: 500, letterSpacing: "-0.02em", margin: "0 0 4px" }}>
+            Create account
+          </h2>
+          <p className="muted" style={{ margin: "0 0 28px", fontSize: 13 }}>
+            Registering as <strong>{roleLabel}</strong>
+          </p>
+
+          {error && (
+            <div style={{ marginBottom: 16, padding: "10px 12px", background: "var(--red-bg)", color: "var(--red)", borderRadius: 7, fontSize: 13, border: "1px solid color-mix(in oklch, var(--red) 30%, transparent)" }}>
+              {error}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700">Email format</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="advocate@bar.in" 
-                required 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="font-mono text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-700">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="font-mono"
-              />
-            </div>
-            <Button type="submit" className="w-full bg-[#1e3a8a] hover:bg-[#0a1f44]" disabled={loading}>
-              {loading ? "Registering..." : "Create Account"}
-            </Button>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <label className="label">Full name</label>
+            <input
+              className="input"
+              placeholder="Ramesh Kumar"
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              style={{ marginBottom: 14 }}
+            />
+
+            <label className="label">Email</label>
+            <input
+              className="input"
+              type="email"
+              placeholder="advocate@bar.in"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              style={{ marginBottom: 14 }}
+            />
+
+            <label className="label">Password</label>
+            <input
+              className="input"
+              type="password"
+              required
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
+
+            <button
+              type="submit"
+              className="btn primary lg"
+              style={{ width: "100%", justifyContent: "center", marginTop: 22 }}
+              disabled={loading}
+            >
+              {loading ? "Creating account…" : `Create ${roleLabel} account`}
+              {!loading && <ArrowRIcon />}
+            </button>
           </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-2 text-sm text-center text-slate-600">
-          <div>
+
+          <p className="help" style={{ marginTop: 24, lineHeight: 1.6 }}>
             Already have an account?{" "}
-            <Link href={`/sign-in?role=${rolePrefix}`} className="text-[#1e3a8a] hover:underline font-semibold">
+            <Link href={`/sign-in?role=${rolePrefix}`} style={{ color: "var(--primary)", textDecoration: "underline" }}>
               Sign in
             </Link>
-          </div>
-          <p className="text-xs text-slate-400 mt-4 px-4 text-center">ADVISORY ONLY — NOT LEGAL ADVICE</p>
-        </CardFooter>
-      </Card>
+          </p>
+
+          <p className="help" style={{ marginTop: 12, lineHeight: 1.6 }}>
+            All AI outputs are <strong>advisory only</strong> and not legal advice. Case data is encrypted at rest and in transit.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function SignUpPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#061735] text-white">Loading...</div>}>
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--navy-900)", color: "white" }}>
+        Loading…
+      </div>
+    }>
       <SignUpContent />
     </Suspense>
   );

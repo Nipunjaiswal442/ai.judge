@@ -9,8 +9,6 @@ export default async function JudgeBriefPage({ params }: { params: Promise<{ cas
   const resolvedParams = await params;
   
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <BriefViewerClient caseId={resolvedParams.caseId as any} />
-    </div>
+    <BriefViewerClient caseId={resolvedParams.caseId as any} />
   );
 }

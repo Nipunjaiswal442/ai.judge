@@ -8,11 +8,9 @@ export default async function LawyerCasePage({ params }: { params: Promise<{ cas
   const resolvedParams = await params;
 
   return (
-    <div className="space-y-6">
-      <CaseDetailClient
-        caseId={resolvedParams.caseId as any}
-        userId={session.user.id as any}
-      />
-    </div>
+    <CaseDetailClient
+      caseId={resolvedParams.caseId as any}
+      userId={session.user.id as any}
+    />
   );
 }
