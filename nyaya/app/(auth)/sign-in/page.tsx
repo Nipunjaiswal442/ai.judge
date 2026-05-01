@@ -98,11 +98,12 @@ function SignInContent() {
     try {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: dashboardUrl,
+        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectUrlComplete: `${window.location.origin}${dashboardUrl}`,
       });
     } catch (err: any) {
-      setError("Google sign-in is unavailable right now. Use email/password.");
+      const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || err?.message || "Google sign-in failed.";
+      setError(msg);
       setGoogleLoading(false);
     }
   };
