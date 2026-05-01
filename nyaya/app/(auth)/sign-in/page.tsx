@@ -1,10 +1,9 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useSignIn } from "@clerk/nextjs/legacy";
+import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Suspense } from "react";
 import Chakra from "@/components/ui/chakra";
 
 function ScaleIcon({ size = 16 }: { size?: number }) {
@@ -54,18 +53,13 @@ function GoogleIcon() {
 }
 
 const ROLES = [
-  { key: "judge",              label: "Judge",               desc: "DCDRC presiding officer",        icon: <ScaleIcon /> },
-  { key: "complainant_lawyer", label: "Complainant Counsel", desc: "Filing on behalf of consumer",   icon: <UserIcon /> },
-  { key: "opposing_lawyer",    label: "Opposing Counsel",    desc: "Defending opposite party",       icon: <UsersIcon /> },
+  { key: "judge",              label: "Judge",               desc: "DCDRC presiding officer",      icon: <ScaleIcon /> },
+  { key: "complainant_lawyer", label: "Complainant Counsel", desc: "Filing on behalf of consumer", icon: <UserIcon /> },
+  { key: "opposing_lawyer",    label: "Opposing Counsel",    desc: "Defending opposite party",     icon: <UsersIcon /> },
 ];
 
-// Map UI role key → auth role query param
-function roleToParam(key: string) {
-  if (key === "judge") return "JUDGE";
-  return "LAWYER";
-}
-
 function SignInContent() {
+  const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
   const [role, setRole] = useState("judge");
   const [email, setEmail] = useState("");
@@ -74,56 +68,56 @@ function SignInContent() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const selectedRole = ROLES.find(r => r.key === role)!;
+  const dashboardUrl = role === "judge" ? "/judge/dashboard" : "/lawyer/dashboard";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoaded) return;
     setLoading(true);
     setError("");
-    const res = await signIn("credentials", { email, password, redirect: false });
-    setLoading(false);
-    if (res?.error) {
-      setError("Invalid email or password");
-    } else {
-      router.push(role === "judge" ? "/judge/dashboard" : "/lawyer/dashboard");
+    try {
+      const result = await signIn.create({ identifier: email, password });
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.push(dashboardUrl);
+      } else {
+        setError("Sign-in could not be completed. Please try again.");
+      }
+    } catch (err: any) {
+      setError(err.errors?.[0]?.longMessage || err.errors?.[0]?.message || "Invalid email or password.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (!isLoaded) return;
     setGoogleLoading(true);
     setError("");
-    const callbackUrl = role === "judge" ? "/judge/dashboard" : "/lawyer/dashboard";
-    const res = await signIn("google", { callbackUrl, redirect: false });
-    if (res?.error) {
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: dashboardUrl,
+      });
+    } catch (err: any) {
       setError("Google sign-in is unavailable right now. Use email/password.");
       setGoogleLoading(false);
-      return;
     }
-    if (res?.url) { router.push(res.url); return; }
-    setGoogleLoading(false);
-    setError("Google sign-in could not be started.");
   };
-
-  const selectedRole = ROLES.find(r => r.key === role)!;
 
   return (
     <div className="signin">
       {/* ── Left art panel ── */}
       <div className="signin-art">
-        {/* Chakra watermark */}
-        <Chakra
-          size={520}
-          strokeWidth={0.6}
-          style={{ position: "absolute", top: -120, right: -120, opacity: 0.10, color: "white" }}
-        />
-
-        {/* Brand */}
+        <Chakra size={520} strokeWidth={0.6} style={{ position: "absolute", top: -120, right: -120, opacity: 0.10, color: "white" }} />
         <div className="row" style={{ gap: 10, alignItems: "center", position: "relative" }}>
           <Chakra size={28} strokeWidth={1.4} style={{ color: "white" }} />
           <div style={{ fontFamily: "var(--serif)", fontWeight: 600, fontSize: 20, letterSpacing: "-0.02em", color: "white" }}>
             Nyāya <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 400 }}>न्याय</span>
           </div>
         </div>
-
-        {/* Hero copy */}
         <div style={{ marginTop: "auto", maxWidth: 480, position: "relative" }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)", marginBottom: 16 }}>
             An assistive layer for the bench &amp; the bar
@@ -135,14 +129,8 @@ function SignInContent() {
           <p style={{ marginTop: 24, color: "rgba(255,255,255,0.7)", fontSize: 15, lineHeight: 1.6, maxWidth: 440 }}>
             A neutral case-structuring platform for District Consumer Commissions under the Consumer Protection Act, 2019.
           </p>
-
-          {/* Stats */}
           <div className="row" style={{ marginTop: 36, gap: 32, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>
-            {[
-              { n: "50+", l: "Curated CPA precedents" },
-              { n: "8 sections", l: "per analysis brief" },
-              { n: "100%", l: "Sourced citations" },
-            ].map(s => (
+            {[{ n: "50+", l: "Curated CPA precedents" }, { n: "8 sections", l: "per analysis brief" }, { n: "100%", l: "Sourced citations" }].map(s => (
               <div key={s.l} className="col" style={{ gap: 4 }}>
                 <span className="serif" style={{ fontSize: 22, color: "white", fontWeight: 500 }}>{s.n}</span>
                 <span>{s.l}</span>
@@ -150,7 +138,6 @@ function SignInContent() {
             ))}
           </div>
         </div>
-
         <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)", fontSize: 11, position: "relative" }}>
           Academic / portfolio MVP · Not for production deployment without legal review · Aligned with SUPACE philosophy
         </div>
@@ -172,13 +159,7 @@ function SignInContent() {
           <div className="col" style={{ gap: 8, marginBottom: 24 }}>
             <label className="label">I am signing in as</label>
             {ROLES.map(r => (
-              <button
-                key={r.key}
-                type="button"
-                className={"cat-card " + (role === r.key ? "selected" : "")}
-                onClick={() => setRole(r.key)}
-                style={{ padding: 12 }}
-              >
+              <button key={r.key} type="button" className={"cat-card " + (role === r.key ? "selected" : "")} onClick={() => setRole(r.key)} style={{ padding: 12 }}>
                 <div className="cat-icon">{r.icon}</div>
                 <div style={{ flex: 1 }}>
                   <div className="cat-name">{r.label}</div>
@@ -193,37 +174,15 @@ function SignInContent() {
 
           <form onSubmit={handleSubmit}>
             <label className="label">Email</label>
-            <input
-              className="input"
-              type="email"
-              placeholder="advocate@bar.in"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              style={{ marginBottom: 14 }}
-            />
-
+            <input className="input" type="email" placeholder="advocate@bar.in" required value={email} onChange={e => setEmail(e.target.value)} style={{ marginBottom: 14 }} />
             <label className="label">Password</label>
-            <input
-              className="input"
-              type="password"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
-
+            <input className="input" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
             {role === "judge" && (
               <p className="help" style={{ marginTop: 10, display: "flex", gap: 6, alignItems: "flex-start" }}>
                 <ShieldIcon /> Judicial accounts require admin verification (simulated in MVP)
               </p>
             )}
-
-            <button
-              type="submit"
-              className="btn primary lg"
-              style={{ width: "100%", justifyContent: "center", marginTop: 22 }}
-              disabled={loading}
-            >
+            <button type="submit" className="btn primary lg" style={{ width: "100%", justifyContent: "center", marginTop: 22 }} disabled={loading || !isLoaded}>
               {loading ? "Signing in…" : `Sign in as ${selectedRole.label}`}
               {!loading && <ArrowRIcon />}
             </button>
@@ -235,26 +194,16 @@ function SignInContent() {
             <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
           </div>
 
-          <button
-            className="btn lg"
-            style={{ width: "100%", justifyContent: "center" }}
-            onClick={handleGoogleSignIn}
-            disabled={googleLoading || loading}
-            type="button"
-          >
+          <button className="btn lg" style={{ width: "100%", justifyContent: "center" }} onClick={handleGoogleSignIn} disabled={googleLoading || loading || !isLoaded} type="button">
             <GoogleIcon /> {googleLoading ? "Redirecting…" : "Continue with Google"}
           </button>
 
           <p className="help" style={{ marginTop: 24, lineHeight: 1.6 }}>
-            Don't have an account?{" "}
-            <Link href={`/sign-up?role=${roleToParam(role)}`} style={{ color: "var(--primary)", textDecoration: "underline" }}>
-              Register here
-            </Link>
+            Don&apos;t have an account?{" "}
+            <Link href="/sign-up" style={{ color: "var(--primary)", textDecoration: "underline" }}>Register here</Link>
           </p>
-
           <p className="help" style={{ marginTop: 12, lineHeight: 1.6 }}>
-            By continuing you agree to the platform's terms of use and acknowledge that all AI outputs are{" "}
-            <strong>advisory only</strong> and not legal advice.
+            By continuing you agree to the platform&apos;s terms of use and acknowledge that all AI outputs are <strong>advisory only</strong> and not legal advice.
           </p>
         </div>
       </div>
@@ -264,11 +213,7 @@ function SignInContent() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--navy-900)", color: "white" }}>
-        Loading…
-      </div>
-    }>
+    <Suspense fallback={<div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--navy-900)", color: "white" }}>Loading…</div>}>
       <SignInContent />
     </Suspense>
   );

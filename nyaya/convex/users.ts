@@ -11,32 +11,36 @@ export const getUserByEmail = query({
   },
 });
 
+export const getUserByClerkId = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
+  },
+});
+
 export const createUser = mutation({
   args: {
     email: v.string(),
     name: v.string(),
-    authId: v.string(),
-    password: v.optional(v.string()),
+    clerkId: v.string(),
     role: v.union(v.literal("JUDGE"), v.literal("LAWYER"), v.literal("ADMIN")),
   },
   handler: async (ctx, args) => {
-    // Check if user already exists
     const existing = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
       .unique();
 
-    if (existing) {
-      throw new Error("User with this email already exists");
-    }
+    if (existing) return existing._id;
 
-    const userId = await ctx.db.insert("users", {
+    return await ctx.db.insert("users", {
       email: args.email,
       name: args.name,
-      authId: args.authId,
-      password: args.password,
+      clerkId: args.clerkId,
       role: args.role,
     });
-    return userId;
   },
 });

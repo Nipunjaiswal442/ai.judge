@@ -9,9 +9,8 @@ export default defineSchema({
     barCouncilId: v.optional(v.string()),
     verifiedAt: v.optional(v.number()),
     jurisdiction: v.optional(v.string()),
-    authId: v.string(), // NextAuth subject
-    password: v.optional(v.string()), // added for credentials
-  }).index("by_email", ["email"]).index("by_authId", ["authId"]),
+    clerkId: v.string(),
+  }).index("by_email", ["email"]).index("by_clerkId", ["clerkId"]),
 
   cases: defineTable({
     humanId: v.string(), // e.g. CPA-2026-DCDRC-AP-0001

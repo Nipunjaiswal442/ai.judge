@@ -1,10 +1,8 @@
-import { auth } from "@/lib/auth";
+import { getServerUser } from "@/lib/serverUser";
 import NewCaseClient from "./NewCaseClient";
 
 export default async function NewCasePage() {
-  const session = await auth();
-  
-  if (!session?.user) return null;
-
-  return <NewCaseClient userId={session.user.id as any} />;
+  const user = await getServerUser();
+  if (!user) return null;
+  return <NewCaseClient userId={user.convexId} />;
 }

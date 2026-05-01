@@ -18,6 +18,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 import ConvexClientProvider from "./ConvexClientProvider";
+import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
   title: "Nyāya - Case Analysis Platform",
@@ -30,15 +31,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${fraunces.variable} ${jetBrainsMono.variable} font-sans antialiased bg-background text-foreground`}
-        suppressHydrationWarning
-      >
-        <ConvexClientProvider>
-          {children}
-        </ConvexClientProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={`${inter.variable} ${fraunces.variable} ${jetBrainsMono.variable} font-sans antialiased bg-background text-foreground`}
+          suppressHydrationWarning
+        >
+          <ConvexClientProvider>
+            {children}
+          </ConvexClientProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

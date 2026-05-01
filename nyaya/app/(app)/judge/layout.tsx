@@ -1,20 +1,9 @@
-import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { getServerUser } from "@/lib/serverUser";
 
-export default async function JudgeSectionLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect("/sign-in?role=JUDGE");
-  }
-
-  if (session.user.role !== "JUDGE") {
-    redirect("/lawyer/dashboard");
-  }
-
+export default async function JudgeSectionLayout({ children }: { children: React.ReactNode }) {
+  const user = await getServerUser();
+  if (!user) redirect("/sign-in?role=JUDGE");
+  if (user.role !== "JUDGE") redirect("/lawyer/dashboard");
   return <>{children}</>;
 }

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useSignUp } from "@clerk/nextjs/legacy";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Suspense } from "react";
 import Chakra from "@/components/ui/chakra";
 
 function ArrowRIcon() {
@@ -19,6 +18,7 @@ function SignUpContent() {
   const searchParams = useSearchParams();
   const rolePrefix = searchParams.get("role") || "LAWYER";
   const router = useRouter();
+  const { signUp, setActive, isLoaded } = useSignUp();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,62 +26,60 @@ function SignUpContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const roleLabel = rolePrefix === "JUDGE" ? "Judge" : "Counsel";
+  const dashboardUrl = rolePrefix === "JUDGE" ? "/judge/dashboard" : "/lawyer/dashboard";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoaded) return;
     setLoading(true);
     setError("");
 
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role: rolePrefix }),
+      // Step 1: Create user in Clerk
+      const result = await signUp.create({
+        emailAddress: email,
+        password,
+        firstName: name.split(" ")[0],
+        lastName: name.split(" ").slice(1).join(" ") || undefined,
+        unsafeMetadata: { role: rolePrefix },
       });
 
-      const data = await res.json();
+      if (result.status === "complete") {
+        // Step 2: Activate the session
+        await setActive({ session: result.createdSessionId });
 
-      if (!res.ok) {
-        setError(data.error || "Something went wrong");
+        // Step 3: Create Convex user + set Clerk publicMetadata
+        await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, role: rolePrefix }),
+        });
+
+        router.push(dashboardUrl);
+        router.refresh();
+      } else {
+        // Should not happen when email verification is disabled in Clerk dashboard
+        setError("Sign-up requires verification. Check your email.");
         setLoading(false);
-        return;
       }
-
-      const signInRes = await signIn("credentials", { email, password, redirect: false });
-
-      if (signInRes?.error) {
-        setError("Registered, but auto sign-in failed. Please sign in manually.");
-        setLoading(false);
-        router.push(`/sign-in?role=${rolePrefix}`);
-        return;
-      }
-
-      router.push(rolePrefix === "JUDGE" ? "/judge/dashboard" : "/lawyer/dashboard");
-      router.refresh();
-    } catch {
-      setError("Registration failed. Please try again.");
+    } catch (err: any) {
+      setError(err.errors?.[0]?.longMessage || err.errors?.[0]?.message || "Registration failed. Please try again.");
       setLoading(false);
     }
   };
-
-  const roleLabel = rolePrefix === "JUDGE" ? "Judge" : "Counsel";
 
   return (
     <div className="signin">
       {/* ── Left art panel ── */}
       <div className="signin-art">
-        <Chakra
-          size={520}
-          strokeWidth={0.6}
-          style={{ position: "absolute", top: -120, right: -120, opacity: 0.10, color: "white" }}
-        />
-
+        <Chakra size={520} strokeWidth={0.6} style={{ position: "absolute", top: -120, right: -120, opacity: 0.10, color: "white" }} />
         <div className="row" style={{ gap: 10, alignItems: "center", position: "relative" }}>
           <Chakra size={28} strokeWidth={1.4} style={{ color: "white" }} />
           <div style={{ fontFamily: "var(--serif)", fontWeight: 600, fontSize: 20, letterSpacing: "-0.02em", color: "white" }}>
             Nyāya <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 400 }}>न्याय</span>
           </div>
         </div>
-
         <div style={{ marginTop: "auto", maxWidth: 480, position: "relative" }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)", marginBottom: 16 }}>
             Join the workspace
@@ -91,10 +89,9 @@ function SignUpContent() {
             <span style={{ fontStyle: "italic", color: "rgba(255,255,255,0.7)" }}>Faster hearings.</span>
           </h1>
           <p style={{ marginTop: 24, color: "rgba(255,255,255,0.7)", fontSize: 15, lineHeight: 1.6, maxWidth: 440 }}>
-            Register your {roleLabel.toLowerCase()} account to access guided Q&A, document management, and AI-assisted case analysis.
+            Register your {roleLabel.toLowerCase()} account to access guided Q&amp;A, document management, and AI-assisted case analysis.
           </p>
         </div>
-
         <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)", fontSize: 11, position: "relative" }}>
           Academic / portfolio MVP · Not for production deployment without legal review
         </div>
@@ -103,9 +100,7 @@ function SignUpContent() {
       {/* ── Right form panel ── */}
       <div className="signin-form">
         <div style={{ width: "100%", maxWidth: 380 }}>
-          <h2 className="serif" style={{ fontSize: 28, fontWeight: 500, letterSpacing: "-0.02em", margin: "0 0 4px" }}>
-            Create account
-          </h2>
+          <h2 className="serif" style={{ fontSize: 28, fontWeight: 500, letterSpacing: "-0.02em", margin: "0 0 4px" }}>Create account</h2>
           <p className="muted" style={{ margin: "0 0 28px", fontSize: 13 }}>
             Registering as <strong>{roleLabel}</strong>
           </p>
@@ -118,41 +113,12 @@ function SignUpContent() {
 
           <form onSubmit={handleSubmit}>
             <label className="label">Full name</label>
-            <input
-              className="input"
-              placeholder="Ramesh Kumar"
-              required
-              value={name}
-              onChange={e => setName(e.target.value)}
-              style={{ marginBottom: 14 }}
-            />
-
+            <input className="input" placeholder="Ramesh Kumar" required value={name} onChange={e => setName(e.target.value)} style={{ marginBottom: 14 }} />
             <label className="label">Email</label>
-            <input
-              className="input"
-              type="email"
-              placeholder="advocate@bar.in"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              style={{ marginBottom: 14 }}
-            />
-
+            <input className="input" type="email" placeholder="advocate@bar.in" required value={email} onChange={e => setEmail(e.target.value)} style={{ marginBottom: 14 }} />
             <label className="label">Password</label>
-            <input
-              className="input"
-              type="password"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
-
-            <button
-              type="submit"
-              className="btn primary lg"
-              style={{ width: "100%", justifyContent: "center", marginTop: 22 }}
-              disabled={loading}
-            >
+            <input className="input" type="password" required minLength={8} value={password} onChange={e => setPassword(e.target.value)} />
+            <button type="submit" className="btn primary lg" style={{ width: "100%", justifyContent: "center", marginTop: 22 }} disabled={loading || !isLoaded}>
               {loading ? "Creating account…" : `Create ${roleLabel} account`}
               {!loading && <ArrowRIcon />}
             </button>
@@ -160,11 +126,8 @@ function SignUpContent() {
 
           <p className="help" style={{ marginTop: 24, lineHeight: 1.6 }}>
             Already have an account?{" "}
-            <Link href={`/sign-in?role=${rolePrefix}`} style={{ color: "var(--primary)", textDecoration: "underline" }}>
-              Sign in
-            </Link>
+            <Link href={`/sign-in`} style={{ color: "var(--primary)", textDecoration: "underline" }}>Sign in</Link>
           </p>
-
           <p className="help" style={{ marginTop: 12, lineHeight: 1.6 }}>
             All AI outputs are <strong>advisory only</strong> and not legal advice. Case data is encrypted at rest and in transit.
           </p>
@@ -176,11 +139,7 @@ function SignUpContent() {
 
 export default function SignUpPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--navy-900)", color: "white" }}>
-        Loading…
-      </div>
-    }>
+    <Suspense fallback={<div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--navy-900)", color: "white" }}>Loading…</div>}>
       <SignUpContent />
     </Suspense>
   );

@@ -1,7 +1,8 @@
-import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Chakra from "@/components/ui/chakra";
+import SignOutButton from "@/components/ui/SignOutButton";
+import { getServerUser } from "@/lib/serverUser";
 
 function ScaleIcon() {
   return (
@@ -66,31 +67,12 @@ function InfoIcon() {
     </svg>
   );
 }
-function LogoutIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
-    </svg>
-  );
-}
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const user = await getServerUser();
+  if (!user) redirect("/sign-in");
 
-  if (!session?.user) {
-    redirect("/sign-in");
-  }
-
-  const id = session.user.id || "";
-  const looksLikeConvexId = /^[a-z0-9]{20,}$/.test(id);
-  if (!looksLikeConvexId) {
-    await signOut({ redirectTo: "/sign-in" });
-  }
-
-  const role = session.user.role as string;
-  const isJudge = role === "JUDGE";
-  const name = session.user.name || session.user.email || "User";
-  const initials = name.split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]).join("").toUpperCase();
+  const isJudge = user.role === "JUDGE";
 
   const judgeNav = [
     { href: "/judge/dashboard", label: "Cases Assigned", icon: <ScaleIcon /> },
@@ -126,25 +108,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="crumbs">
             <span>{isJudge ? "Judge" : "Counsel"}</span>
             <span className="sep">›</span>
-            <span className="here">{isJudge ? "Workspace" : "Workspace"}</span>
+            <span className="here">Workspace</span>
           </div>
         </div>
 
         <div className="topbar-right">
           <div className="user-chip">
             <div className="avatar" style={{ background: isJudge ? "var(--primary)" : "var(--blue)" }}>
-              {initials}
+              {user.initials}
             </div>
-            <span className="name">{name.split(" ")[0]}</span>
+            <span className="name">{user.name.split(" ")[0]}</span>
           </div>
-          <form action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}>
-            <button type="submit" className="icon-btn" title="Sign out">
-              <LogoutIcon />
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </header>
 

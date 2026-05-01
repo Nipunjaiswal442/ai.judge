@@ -1,14 +1,8 @@
-import { auth } from "@/lib/auth";
+import { getServerUser } from "@/lib/serverUser";
 import BriefViewerClient from "./BriefViewerClient";
 
 export default async function JudgeBriefPage({ params }: { params: Promise<{ caseId: string }> }) {
-  const session = await auth();
-  
-  if (!session?.user) return null;
-
-  const resolvedParams = await params;
-  
-  return (
-    <BriefViewerClient caseId={resolvedParams.caseId as any} />
-  );
+  const [user, resolvedParams] = await Promise.all([getServerUser(), params]);
+  if (!user) return null;
+  return <BriefViewerClient caseId={resolvedParams.caseId as any} />;
 }

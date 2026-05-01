@@ -1,16 +1,13 @@
-import { auth } from "@/lib/auth";
+import { getServerUser } from "@/lib/serverUser";
 import CaseDetailClient from "./CaseDetailClient";
 
 export default async function LawyerCasePage({ params }: { params: Promise<{ caseId: string }> }) {
-  const session = await auth();
-  if (!session?.user) return null;
-
-  const resolvedParams = await params;
-
+  const [user, resolvedParams] = await Promise.all([getServerUser(), params]);
+  if (!user) return null;
   return (
     <CaseDetailClient
       caseId={resolvedParams.caseId as any}
-      userId={session.user.id as any}
+      userId={user.convexId}
     />
   );
 }

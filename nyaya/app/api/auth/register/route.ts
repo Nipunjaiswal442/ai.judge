@@ -1,46 +1,44 @@
 import { NextResponse } from "next/server";
+import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
-import bcrypt from "bcryptjs";
 
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-const convex =
-  convexUrl && convexUrl.startsWith("https://")
-    ? new ConvexHttpClient(convexUrl)
-    : null;
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(req: Request) {
   try {
-    if (!convex) {
-      return NextResponse.json(
-        { error: "Server is missing NEXT_PUBLIC_CONVEX_URL configuration." },
-        { status: 500 }
-      );
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { name, email, password, role } = await req.json();
-
-    if (!email || !password || !name) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    const clerkUser = await currentUser();
+    if (!clerkUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const authId = email; 
+    const { name, role } = await req.json();
+    const validRole = role === "JUDGE" ? "JUDGE" : "LAWYER";
+    const email = clerkUser.emailAddresses[0]?.emailAddress || "";
+    const displayName = name || `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || email;
 
-    // create the user
+    // Set role in Clerk publicMetadata (server-side, trusted)
+    const client = await clerkClient();
+    await client.users.updateUserMetadata(userId, {
+      publicMetadata: { role: validRole },
+    });
+
+    // Create Convex user record (idempotent — returns existing if already created)
     await convex.mutation(api.users.createUser, {
-      name,
+      clerkId: userId,
       email,
-      password: hashedPassword,
-      authId,
-      role: role || "LAWYER"
+      name: displayName,
+      role: validRole,
     });
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error: any) {
-    if (error.message?.includes("already exists")) {
-      return NextResponse.json({ error: "User already exists" }, { status: 409 });
-    }
+    console.error("Register error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
