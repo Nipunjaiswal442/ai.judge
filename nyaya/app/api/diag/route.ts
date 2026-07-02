@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizePrivateKey } from "@/lib/firebaseAdmin";
 
 // Temporary production diagnostic: reports runtime + import health without
 // leaking secrets. Remove once deployment issues are resolved.
@@ -13,6 +14,7 @@ export async function GET() {
       FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
       FIREBASE_PRIVATE_KEY: !!process.env.FIREBASE_PRIVATE_KEY,
       FIREBASE_PRIVATE_KEY_STARTS_OK: (process.env.FIREBASE_PRIVATE_KEY || "").startsWith("-----BEGIN"),
+      FIREBASE_PRIVATE_KEY_NORMALIZED_OK: !!normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY),
       NVIDIA_API_KEY: !!process.env.NVIDIA_API_KEY,
     },
   };
@@ -26,11 +28,12 @@ export async function GET() {
 
   try {
     const { cert } = await import("firebase-admin/app");
-    if (process.env.FIREBASE_PRIVATE_KEY) {
+    const normalized = normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+    if (normalized) {
       cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+        privateKey: normalized,
       });
       report.certParse = "ok";
     } else {
