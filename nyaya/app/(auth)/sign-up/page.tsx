@@ -10,7 +10,7 @@ import {
 } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebaseClient";
 import Chakra from "@/components/ui/chakra";
-import { dashboardForRole, normalizeRole } from "@/lib/authRoles";
+import { dashboardForRole, searchRoleToSignInKey, signInRoleKeyToAppRole } from "@/lib/authRoles";
 
 function ArrowRIcon() {
   return (
@@ -19,6 +19,33 @@ function ArrowRIcon() {
     </svg>
   );
 }
+function ScaleIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+      <path d="M12 3v18M5 7l-3 7a4 4 0 0 0 6 0l-3-7zM19 7l-3 7a4 4 0 0 0 6 0l-3-7zM5 7h14M9 21h6"/>
+    </svg>
+  );
+}
+function UserIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+      <circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
+    </svg>
+  );
+}
+function UsersIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+      <circle cx="9" cy="8" r="3.5"/><path d="M3 21a6 6 0 0 1 12 0M16 5a3.5 3.5 0 0 1 0 7M21 21a5.5 5.5 0 0 0-4-5.3"/>
+    </svg>
+  );
+}
+
+const ROLES = [
+  { key: "judge",              label: "Judge",               desc: "DCDRC presiding officer — reviews analysis briefs",     icon: <ScaleIcon /> },
+  { key: "complainant_lawyer", label: "Complainant Counsel", desc: "Files consumer cases and answers guided Q&A",           icon: <UserIcon /> },
+  { key: "opposing_lawyer",    label: "Opposing Counsel",    desc: "Joins invited cases to defend the opposite party",      icon: <UsersIcon /> },
+];
 
 type RegisterResponse = {
   error?: string;
@@ -70,16 +97,18 @@ async function establishSession(user: User, name: string, role: string) {
 
 function SignUpContent() {
   const searchParams = useSearchParams();
-  const rolePrefix = normalizeRole(searchParams.get("role"));
   const router = useRouter();
 
+  const [roleKey, setRoleKey] = useState(() => searchRoleToSignInKey(searchParams.get("role")));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const roleLabel = rolePrefix === "JUDGE" ? "Judge" : "Counsel";
+  const selectedRole = ROLES.find(r => r.key === roleKey)!;
+  const roleLabel = selectedRole.label;
+  const appRole = signInRoleKeyToAppRole(roleKey);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +119,7 @@ function SignUpContent() {
     try {
       const cred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
       await updateProfile(cred.user, { displayName: name }).catch(() => {});
-      const destination = await establishSession(cred.user, name, rolePrefix);
+      const destination = await establishSession(cred.user, name, appRole);
       router.replace(destination);
       router.refresh();
     } catch (err: unknown) {
@@ -131,7 +160,7 @@ function SignUpContent() {
       <div className="signin-form">
         <div style={{ width: "100%", maxWidth: 380 }}>
           <h2 className="serif" style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 4px" }}>Create account</h2>
-          <p className="muted" style={{ margin: "0 0 28px", fontSize: 13 }}>
+          <p className="muted" style={{ margin: "0 0 24px", fontSize: 13 }}>
             Registering as <strong>{roleLabel}</strong>
           </p>
 
@@ -140,6 +169,23 @@ function SignUpContent() {
               {error}
             </div>
           )}
+
+          {/* Role selector — one card per party */}
+          <div className="col" style={{ gap: 8, marginBottom: 24 }}>
+            <label className="label">I am registering as</label>
+            {ROLES.map(r => (
+              <button key={r.key} type="button" className={"cat-card " + (roleKey === r.key ? "selected" : "")} onClick={() => setRoleKey(r.key)} style={{ padding: 12 }}>
+                <div className="cat-icon">{r.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div className="cat-name">{r.label}</div>
+                  <div className="cat-desc">{r.desc}</div>
+                </div>
+                <div style={{ width: 18, height: 18, border: "2px solid var(--text)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  {roleKey === r.key && <div style={{ width: 8, height: 8, background: "var(--text)" }} />}
+                </div>
+              </button>
+            ))}
+          </div>
 
           <form onSubmit={handleSubmit}>
             <label className="label">Full name</label>
