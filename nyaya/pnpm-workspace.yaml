@@ -1,0 +1,14 @@
+packages:
+  - .
+
+allowBuilds:
+  '@clerk/shared': true
+  '@firebase/util': true
+  esbuild: true
+  msw: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true
+
+overrides:
+  jwks-rsa>jose: 5.10.0
