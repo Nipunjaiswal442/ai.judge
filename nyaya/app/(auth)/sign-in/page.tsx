@@ -1,44 +1,48 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
-import { useSignIn } from "@clerk/nextjs/legacy";
-import { useState, Suspense, useEffect, useCallback, useRef } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  type User,
+} from "firebase/auth";
+import { firebaseAuth, googleProvider } from "@/lib/firebaseClient";
 import Chakra from "@/components/ui/chakra";
 import { dashboardForRole, searchRoleToSignInKey, signInRoleKeyToAppRole } from "@/lib/authRoles";
 
 function ScaleIcon({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
       <path d="M12 3v18M5 7l-3 7a4 4 0 0 0 6 0l-3-7zM19 7l-3 7a4 4 0 0 0 6 0l-3-7zM5 7h14M9 21h6"/>
     </svg>
   );
 }
 function UserIcon({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
       <circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
     </svg>
   );
 }
 function UsersIcon({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
       <circle cx="9" cy="8" r="3.5"/><path d="M3 21a6 6 0 0 1 12 0M16 5a3.5 3.5 0 0 1 0 7M21 21a5.5 5.5 0 0 0-4-5.3"/>
     </svg>
   );
 }
 function ArrowRIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" strokeLinejoin="miter">
       <path d="M5 12h14M13 5l7 7-7 7"/>
     </svg>
   );
 }
 function ShieldIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
     </svg>
   );
@@ -60,37 +64,55 @@ const ROLES = [
   { key: "opposing_lawyer",    label: "Opposing Counsel",    desc: "Defending opposite party",     icon: <UsersIcon /> },
 ];
 
-type ClerkLikeError = {
-  errors?: Array<{ longMessage?: string; message?: string }>;
-  message?: string;
-};
-
 type RegisterResponse = {
   error?: string;
   dashboardUrl?: string;
   role?: string;
 };
 
-function getErrorMessage(error: unknown, fallback: string) {
-  const clerkError = error as ClerkLikeError;
-  return (
-    clerkError.errors?.[0]?.longMessage ||
-    clerkError.errors?.[0]?.message ||
-    clerkError.message ||
-    fallback
-  );
+function friendlyFirebaseError(error: unknown, fallback: string) {
+  const code = (error as { code?: string })?.code || "";
+  switch (code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "Invalid email or password.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Wait a moment and try again.";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Google sign-in was cancelled.";
+    case "auth/popup-blocked":
+      return "Popup blocked by the browser. Allow popups and retry.";
+    case "auth/network-request-failed":
+      return "Network error. Check your connection and retry.";
+    default:
+      return (error as { message?: string })?.message || fallback;
+  }
 }
 
-async function syncSignedInUser(roleKey: string) {
+// Create the server session cookie, then ensure the Convex account exists.
+async function establishSession(user: User, roleKey: string) {
+  const idToken = await user.getIdToken();
+
+  const sessionRes = await fetch("/api/auth/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  });
+  if (!sessionRes.ok) {
+    const data = (await sessionRes.json().catch(() => ({}))) as RegisterResponse;
+    throw new Error(data.error || "Could not create a secure session.");
+  }
+
   const appRole = signInRoleKeyToAppRole(roleKey);
-  const response = await fetch("/api/auth/register", {
+  const registerRes = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ role: appRole }),
   });
-  const data = (await response.json().catch(() => ({}))) as RegisterResponse;
-
-  if (!response.ok) {
+  const data = (await registerRes.json().catch(() => ({}))) as RegisterResponse;
+  if (!registerRes.ok) {
     throw new Error(data.error || "Could not finish account setup.");
   }
 
@@ -98,8 +120,6 @@ async function syncSignedInUser(roleKey: string) {
 }
 
 function SignInContent() {
-  const { signIn, setActive, isLoaded } = useSignIn();
-  const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [role, setRole] = useState(() => searchRoleToSignInKey(searchParams.get("role")));
@@ -107,79 +127,42 @@ function SignInContent() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
-  const syncStartedRef = useRef(false);
 
   useEffect(() => {
     setRole(searchRoleToSignInKey(searchParams.get("role")));
   }, [searchParams]);
 
   const selectedRole = ROLES.find(r => r.key === role)!;
-  const appRole = signInRoleKeyToAppRole(role);
-
-  const finishSignedInSession = useCallback(async () => {
-    if (syncStartedRef.current) return;
-    syncStartedRef.current = true;
-    setSyncing(true);
-    setError("");
-
-    try {
-      const destination = await syncSignedInUser(role);
-      router.replace(destination);
-      router.refresh();
-    } catch (err: unknown) {
-      syncStartedRef.current = false;
-      setError(getErrorMessage(err, "You are signed in, but account setup could not be completed."));
-      setSyncing(false);
-    }
-  }, [role, router]);
-
-  useEffect(() => {
-    if (authLoaded && isSignedIn) void finishSignedInSession();
-  }, [authLoaded, isSignedIn, finishSignedInSession]);
+  const busy = loading || googleLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded || syncing) return;
+    if (busy) return;
     setLoading(true);
     setError("");
     try {
-      const result = await signIn.create({ identifier: email, password });
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        const destination = await syncSignedInUser(role);
-        router.replace(destination);
-        router.refresh();
-      } else {
-        setError("Sign-in could not be completed. Please try again.");
-      }
+      const cred = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      const destination = await establishSession(cred.user, role);
+      router.replace(destination);
+      router.refresh();
     } catch (err: unknown) {
-      setError(getErrorMessage(err, "Invalid email or password."));
-    } finally {
+      setError(friendlyFirebaseError(err, "Sign-in failed. Please try again."));
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    if (!isLoaded || syncing) return;
-    if (isSignedIn) {
-      await finishSignedInSession();
-      return;
-    }
-
+    if (busy) return;
     setGoogleLoading(true);
     setError("");
     try {
-      await signIn.authenticateWithRedirect({
-        strategy: "oauth_google",
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: `/auth/complete?role=${appRole}`,
-        continueSignIn: true,
-        continueSignUp: true,
-      });
+      const cred = await signInWithPopup(firebaseAuth, googleProvider);
+      const destination = await establishSession(cred.user, role);
+      router.replace(destination);
+      router.refresh();
     } catch (err: unknown) {
-      setError(getErrorMessage(err, "Google sign-in failed."));
+      setError(friendlyFirebaseError(err, "Google sign-in failed."));
       setGoogleLoading(false);
     }
   };
@@ -191,15 +174,15 @@ function SignInContent() {
         <Chakra size={520} strokeWidth={0.6} style={{ position: "absolute", top: -120, right: -120, opacity: 0.10, color: "white" }} />
         <div className="row" style={{ gap: 10, alignItems: "center", position: "relative" }}>
           <Chakra size={28} strokeWidth={1.4} style={{ color: "white" }} />
-          <div style={{ fontFamily: "var(--serif)", fontWeight: 600, fontSize: 20, letterSpacing: "-0.02em", color: "white" }}>
+          <div style={{ fontFamily: "var(--serif)", fontWeight: 700, fontSize: 20, letterSpacing: "-0.02em", color: "white" }}>
             Nyāya <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 400 }}>न्याय</span>
           </div>
         </div>
         <div style={{ marginTop: "auto", maxWidth: 480, position: "relative" }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 16 }}>
             An assistive layer for the bench &amp; the bar
           </div>
-          <h1 className="serif" style={{ fontSize: 52, fontWeight: 400, lineHeight: 1.05, letterSpacing: "-0.025em", margin: 0, color: "white" }}>
+          <h1 className="serif" style={{ fontSize: 52, fontWeight: 700, lineHeight: 1.05, letterSpacing: "-0.025em", margin: 0, color: "white" }}>
             Clarity for the bench.<br />
             <span style={{ fontStyle: "italic", color: "rgba(255,255,255,0.7)" }}>Structure for the bar.</span>
           </h1>
@@ -209,13 +192,13 @@ function SignInContent() {
           <div className="row" style={{ marginTop: 36, gap: 32, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>
             {[{ n: "50+", l: "Curated CPA precedents" }, { n: "8 sections", l: "per analysis brief" }, { n: "100%", l: "Sourced citations" }].map(s => (
               <div key={s.l} className="col" style={{ gap: 4 }}>
-                <span className="serif" style={{ fontSize: 22, color: "white", fontWeight: 500 }}>{s.n}</span>
+                <span className="serif" style={{ fontSize: 22, color: "white", fontWeight: 700 }}>{s.n}</span>
                 <span>{s.l}</span>
               </div>
             ))}
           </div>
         </div>
-        <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)", fontSize: 11, position: "relative" }}>
+        <div style={{ marginTop: 32, paddingTop: 24, borderTop: "2px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", fontSize: 11, position: "relative" }}>
           Academic / portfolio MVP · Not for production deployment without legal review · Aligned with SUPACE philosophy
         </div>
       </div>
@@ -223,11 +206,11 @@ function SignInContent() {
       {/* ── Right form panel ── */}
       <div className="signin-form">
         <div style={{ width: "100%", maxWidth: 380 }}>
-          <h2 className="serif" style={{ fontSize: 28, fontWeight: 500, letterSpacing: "-0.02em", margin: "0 0 8px" }}>Sign in</h2>
+          <h2 className="serif" style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 8px" }}>Sign in</h2>
           <p className="muted" style={{ margin: "0 0 28px", fontSize: 13 }}>Continue to the case workspace.</p>
 
           {error && (
-            <div style={{ marginBottom: 16, padding: "10px 12px", background: "var(--red-bg)", color: "var(--red)", borderRadius: 7, fontSize: 13, border: "1px solid color-mix(in oklch, var(--red) 30%, transparent)" }}>
+            <div style={{ marginBottom: 16, padding: "10px 12px", background: "var(--red-bg)", color: "var(--red)", fontSize: 13, fontWeight: 600, border: "2px solid var(--red)" }}>
               {error}
             </div>
           )}
@@ -242,8 +225,8 @@ function SignInContent() {
                   <div className="cat-name">{r.label}</div>
                   <div className="cat-desc">{r.desc}</div>
                 </div>
-                <div style={{ width: 18, height: 18, borderRadius: "50%", border: "1.5px solid var(--border-2)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                  {role === r.key && <div style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--primary)" }} />}
+                <div style={{ width: 18, height: 18, border: "2px solid var(--text)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  {role === r.key && <div style={{ width: 8, height: 8, background: "var(--text)" }} />}
                 </div>
               </button>
             ))}
@@ -259,25 +242,25 @@ function SignInContent() {
                 <ShieldIcon /> Judicial accounts require admin verification (simulated in MVP)
               </p>
             )}
-            <button type="submit" className="btn primary lg" style={{ width: "100%", justifyContent: "center", marginTop: 22 }} disabled={loading || syncing || !isLoaded}>
-              {loading || syncing ? "Signing in…" : `Sign in as ${selectedRole.label}`}
-              {!(loading || syncing) && <ArrowRIcon />}
+            <button type="submit" className="btn primary lg" style={{ width: "100%", justifyContent: "center", marginTop: 22 }} disabled={busy}>
+              {loading ? "Signing in…" : `Sign in as ${selectedRole.label}`}
+              {!loading && <ArrowRIcon />}
             </button>
           </form>
 
           <div className="row" style={{ margin: "20px 0", gap: 12 }}>
-            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-            <span className="muted" style={{ fontSize: 11 }}>or</span>
-            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+            <div style={{ flex: 1, height: 2, background: "var(--border)" }} />
+            <span className="muted" style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>or</span>
+            <div style={{ flex: 1, height: 2, background: "var(--border)" }} />
           </div>
 
-          <button className="btn lg" style={{ width: "100%", justifyContent: "center" }} onClick={handleGoogleSignIn} disabled={googleLoading || loading || syncing || !isLoaded} type="button">
-            <GoogleIcon /> {googleLoading || syncing ? "Redirecting…" : "Continue with Google"}
+          <button className="btn lg" style={{ width: "100%", justifyContent: "center" }} onClick={handleGoogleSignIn} disabled={busy} type="button">
+            <GoogleIcon /> {googleLoading ? "Waiting for Google…" : "Continue with Google"}
           </button>
 
           <p className="help" style={{ marginTop: 24, lineHeight: 1.6 }}>
             Don&apos;t have an account?{" "}
-            <Link href="/sign-up" style={{ color: "var(--primary)", textDecoration: "underline" }}>Register here</Link>
+            <Link href="/sign-up" style={{ color: "var(--primary)", textDecoration: "underline", fontWeight: 700 }}>Register here</Link>
           </p>
           <p className="help" style={{ marginTop: 12, lineHeight: 1.6 }}>
             By continuing you agree to the platform&apos;s terms of use and acknowledge that all AI outputs are <strong>advisory only</strong> and not legal advice.
@@ -290,7 +273,7 @@ function SignInContent() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--navy-900)", color: "white" }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--ink-900)", color: "white" }}>Loading…</div>}>
       <SignInContent />
     </Suspense>
   );

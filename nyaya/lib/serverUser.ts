@@ -1,56 +1,57 @@
 import { cache } from "react";
-import { currentUser } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { normalizeRole } from "@/lib/authRoles";
+import { getAdminAuth, SESSION_COOKIE_NAME } from "@/lib/firebaseAdmin";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export const getServerUser = cache(async () => {
+  // cookies() stays outside the try/catch so Next.js can mark the route
+  // dynamic during prerender instead of baking in a signed-out state.
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  if (!sessionCookie) return null;
+
   try {
-    const clerkUser = await currentUser();
-    if (!clerkUser) return null;
+    const adminAuth = getAdminAuth();
+    if (!adminAuth) return null;
 
-    const role = normalizeRole(clerkUser.publicMetadata?.role || clerkUser.unsafeMetadata?.role);
+    const decoded = await adminAuth.verifySessionCookie(sessionCookie).catch(() => null);
+    if (!decoded) return null;
 
-    const email = clerkUser.emailAddresses[0]?.emailAddress || "";
-    const name =
-      `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() ||
-      email ||
-      "User";
-
-    let convexUser = await convex.query(api.users.getUserByClerkId, {
-      clerkId: clerkUser.id,
-    });
+    let convexUser = await convex.query(api.users.getUserByAuthId, { authId: decoded.uid });
 
     if (!convexUser) {
+      // Lazy create (e.g. Google sign-in that skipped the register call)
+      const firebaseUser = await adminAuth.getUser(decoded.uid);
+      const email = firebaseUser.email || decoded.email || "";
+      const name = firebaseUser.displayName || email || "User";
       await convex.mutation(api.users.createUser, {
-        clerkId: clerkUser.id,
+        authId: decoded.uid,
         email,
         name,
-        role,
+        role: "LAWYER",
       });
-      convexUser = await convex.query(api.users.getUserByClerkId, {
-        clerkId: clerkUser.id,
-      });
+      convexUser = await convex.query(api.users.getUserByAuthId, { authId: decoded.uid });
     }
 
     if (!convexUser) return null;
 
     return {
-      clerkId: clerkUser.id,
+      authId: decoded.uid,
       convexId: convexUser._id as Id<"users">,
       role: convexUser.role,
-      name,
-      email,
-      initials: name
+      name: convexUser.name,
+      email: convexUser.email,
+      initials: convexUser.name
         .split(" ")
         .filter(Boolean)
         .slice(0, 2)
         .map((n: string) => n[0])
         .join("")
-        .toUpperCase(),
+        .toUpperCase() || "U",
     };
   } catch {
     return null;

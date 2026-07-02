@@ -11,12 +11,12 @@ export const getUserByEmail = query({
   },
 });
 
-export const getUserByClerkId = query({
-  args: { clerkId: v.string() },
+export const getUserByAuthId = query({
+  args: { authId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_authId", (q) => q.eq("authId", args.authId))
       .unique();
   },
 });
@@ -25,13 +25,13 @@ export const createUser = mutation({
   args: {
     email: v.string(),
     name: v.string(),
-    clerkId: v.string(),
+    authId: v.string(),
     role: v.union(v.literal("JUDGE"), v.literal("LAWYER"), v.literal("ADMIN")),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .withIndex("by_authId", (q) => q.eq("authId", args.authId))
       .unique();
 
     if (existing) return existing._id;
@@ -39,7 +39,7 @@ export const createUser = mutation({
     return await ctx.db.insert("users", {
       email: args.email,
       name: args.name,
-      clerkId: args.clerkId,
+      authId: args.authId,
       role: args.role,
     });
   },

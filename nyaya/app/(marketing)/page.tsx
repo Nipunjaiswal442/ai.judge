@@ -9,21 +9,21 @@ export default function LandingPage() {
       <style dangerouslySetInnerHTML={{
         __html: `
         .landing-page {
-          --navy-900: #061735;
-          --navy-800: #0a1f44;
-          --navy-700: #0f2e63;
-          --navy-600: #1e3a8a;
-          --navy-500: #2c4ba3;
-          --navy-300: #6b7fbf;
-          --gold: #c9a227;
-          --gold-muted: #a88818;
-          --ink: #0f172a;
-          --muted: #475569;
-          --muted-2: #64748b;
-          --hairline: #e2e8f0;
+          --navy-900: #0a0a0a;
+          --navy-800: #141414;
+          --navy-700: #1f1f1f;
+          --navy-600: #2b2b2b;
+          --navy-500: #3d3d3d;
+          --navy-300: #8a8a8a;
+          --gold: #ffe600;
+          --gold-muted: #b8860b;
+          --ink: #0a0a0a;
+          --muted: #3a3a3a;
+          --muted-2: #555555;
+          --hairline: #0a0a0a;
           --surface: #ffffff;
-          --surface-soft: #f8fafc;
-          --surface-soft-2: #f1f5f9;
+          --surface-soft: #f5f1e6;
+          --surface-soft-2: #ece7d8;
           
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           color: var(--ink);
@@ -39,10 +39,8 @@ export default function LandingPage() {
         /* ---------- NAV ---------- */
         .landing-nav {
           position: sticky; top: 0; z-index: 50;
-          background: rgba(6, 23, 53, 0.92);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          background: #0a0a0a;
+          border-bottom: 4px solid #ffe600;
         }
         .nav-inner {
           display: flex; align-items: center; justify-content: space-between;
@@ -50,8 +48,8 @@ export default function LandingPage() {
         }
         .landing-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
         .logo-mark {
-          width: 32px; height: 32px; border-radius: 6px;
-          background: linear-gradient(135deg, #1e3a8a, #0a1f44);
+          width: 32px; height: 32px; border-radius: 0;
+          background: #0a0a0a;
           display: flex; align-items: center; justify-content: center;
           border: 1px solid rgba(201, 162, 39, 0.4);
         }
@@ -65,8 +63,10 @@ export default function LandingPage() {
         }
         .nav-links a:hover { color: #fff; }
         .nav-cta {
-          background: #fff; color: var(--navy-800) !important;
-          padding: 0.55rem 1.1rem; border-radius: 6px; font-weight: 500;
+          background: #ffe600; color: #0a0a0a !important;
+          font-weight: 800;
+          text-transform: uppercase;
+          padding: 0.55rem 1.1rem; border-radius: 0; font-weight: 500;
           transition: transform 0.15s;
           text-decoration: none;
         }
@@ -76,16 +76,14 @@ export default function LandingPage() {
         /* ---------- HERO ---------- */
         .landing-hero {
           position: relative;
-          background: linear-gradient(135deg, #061735 0%, #0a1f44 45%, #1e3a8a 100%);
+          background: #0a0a0a;
           color: #fff;
           padding: 5rem 0 7rem;
           overflow: hidden;
         }
         .landing-hero::before {
           content: ""; position: absolute; inset: 0;
-          background-image:
-            radial-gradient(circle at 20% 30%, rgba(201, 162, 39, 0.08), transparent 40%),
-            radial-gradient(circle at 80% 70%, rgba(107, 127, 191, 0.12), transparent 50%);
+          background-image: none;
           pointer-events: none;
         }
         .hero-chakra {
@@ -98,20 +96,21 @@ export default function LandingPage() {
         .hero-inner { position: relative; z-index: 2; text-align: center; max-width: 820px; margin: 0 auto; padding: 0 1.5rem; }
         .pre-launch-badge {
           display: inline-flex; align-items: center; gap: 0.5rem;
-          background: rgba(201, 162, 39, 0.12);
-          border: 1px solid rgba(201, 162, 39, 0.35);
-          color: var(--gold);
+          background: #ffe600;
+          border: 2px solid #ffe600;
+          color: #0a0a0a;
+          font-weight: 800;
+          text-transform: uppercase;
           padding: 0.4rem 1rem;
-          border-radius: 100px;
+          border-radius: 0;
           font-size: 0.82rem;
           font-weight: 500;
           margin-bottom: 2rem;
           letter-spacing: 0.02em;
         }
         .pre-launch-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: var(--gold);
-          box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.2);
+          width: 8px; height: 8px;
+          background: #0a0a0a;
           animation: pulse 2s infinite;
         }
         @keyframes pulse {
@@ -153,7 +152,7 @@ export default function LandingPage() {
         }
         .landing-btn {
           padding: 0.9rem 1.75rem;
-          border-radius: 8px;
+          border-radius: 0;
           font-size: 0.98rem;
           font-weight: 500;
           text-decoration: none;
@@ -164,13 +163,17 @@ export default function LandingPage() {
           font-family: inherit;
         }
         .btn-primary {
-          background: #fff; color: var(--navy-800);
-          border: 1px solid #fff;
+          background: #ffe600; color: #0a0a0a;
+          border: 2px solid #ffe600;
+          font-weight: 800;
+          text-transform: uppercase;
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15); }
+        .btn-primary:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #ffe600; }
         .btn-secondary {
           background: transparent; color: #fff;
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          border: 2px solid #fff;
+          font-weight: 800;
+          text-transform: uppercase;
         }
         .btn-secondary:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.5); }
         .btn-arrow { font-size: 1.1rem; transition: transform 0.2s; }
@@ -198,22 +201,23 @@ export default function LandingPage() {
 
         /* ---------- DISCLOSURE BANNER ---------- */
         .disclosure {
-          background: #fffbeb;
-          border-top: 1px solid #fde68a;
-          border-bottom: 1px solid #fde68a;
+          background: #ffd23e;
+          border-top: 3px solid #0a0a0a;
+          border-bottom: 3px solid #0a0a0a;
           padding: 1rem 0;
         }
         .disclosure-inner {
           display: flex; align-items: flex-start; gap: 0.75rem;
           max-width: 900px; margin: 0 auto; padding: 0 1.5rem;
           font-size: 0.88rem;
-          color: #78350f;
+          color: #0a0a0a;
+          font-weight: 600;
           line-height: 1.6;
         }
         .disclosure-icon {
           flex-shrink: 0;
           width: 20px; height: 20px;
-          background: #f59e0b;
+          background: #0a0a0a;
           color: #fff;
           border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
@@ -221,7 +225,7 @@ export default function LandingPage() {
           font-weight: 600;
           margin-top: 1px;
         }
-        .disclosure strong { color: #78350f; font-weight: 600; }
+        .disclosure strong { color: #0a0a0a; font-weight: 800; text-transform: uppercase; }
 
         /* ---------- SECTION BASE ---------- */
         section.landing-content { padding: 5.5rem 0; }
@@ -259,20 +263,19 @@ export default function LandingPage() {
         }
         .problem-card {
           background: var(--surface);
-          border: 1px solid var(--hairline);
-          border-radius: 12px;
+          border: 2px solid #0a0a0a;
+          border-radius: 0;
           padding: 2rem;
           transition: all 0.25s;
         }
         .problem-card:hover {
-          border-color: var(--navy-300);
-          transform: translateY(-3px);
-          box-shadow: 0 12px 30px rgba(6, 23, 53, 0.08);
+          transform: translate(-3px, -3px);
+          box-shadow: 6px 6px 0 #0a0a0a;
         }
         .problem-icon {
           width: 44px; height: 44px;
-          background: linear-gradient(135deg, var(--navy-600), var(--navy-800));
-          border-radius: 10px;
+          background: #ffe600; color: #0a0a0a !important; border: 2px solid #0a0a0a;
+          border-radius: 0;
           display: flex; align-items: center; justify-content: center;
           margin-bottom: 1.25rem;
           color: #fff;
@@ -302,14 +305,14 @@ export default function LandingPage() {
           gap: 1.5rem;
           padding: 2rem;
           background: var(--surface);
-          border: 1px solid var(--hairline);
-          border-radius: 12px;
+          border: 2px solid #0a0a0a;
+          border-radius: 0;
           position: relative;
           transition: all 0.25s;
         }
         .flow-step:hover {
-          border-color: var(--navy-300);
-          box-shadow: 0 8px 24px rgba(6, 23, 53, 0.06);
+          transform: translate(-2px, -2px);
+          box-shadow: 5px 5px 0 #0a0a0a;
         }
         .flow-number {
           font-family: 'Fraunces', serif;
@@ -337,12 +340,12 @@ export default function LandingPage() {
           text-transform: uppercase;
           letter-spacing: 0.1em;
           padding: 0.25rem 0.6rem;
-          border-radius: 4px;
+          border-radius: 0;
           margin-bottom: 0.75rem;
         }
-        .who-lawyer { background: rgba(30, 58, 138, 0.08); color: var(--navy-700); }
-        .who-ai { background: rgba(201, 162, 39, 0.12); color: var(--gold-muted); }
-        .who-judge { background: rgba(6, 23, 53, 0.08); color: var(--navy-900); }
+        .who-lawyer { background: #a3c2ff; color: #0a0a0a; border: 2px solid #0a0a0a; }
+        .who-ai { background: #ffe600; color: #0a0a0a; border: 2px solid #0a0a0a; }
+        .who-judge { background: #0a0a0a; color: #ffe600; border: 2px solid #0a0a0a; }
 
         /* ---------- AUDIENCE SPLIT ---------- */
         .audience-grid {
@@ -352,10 +355,12 @@ export default function LandingPage() {
           margin-top: 3rem;
         }
         .audience-card {
-          background: linear-gradient(135deg, #061735 0%, #0a1f44 50%, #1e3a8a 100%);
+          background: #0a0a0a;
+          border: 3px solid #0a0a0a;
+          box-shadow: 8px 8px 0 #ffe600;
           color: #fff;
           padding: 2.75rem;
-          border-radius: 14px;
+          border-radius: 0;
           position: relative;
           overflow: hidden;
         }
@@ -375,7 +380,8 @@ export default function LandingPage() {
         }
         .audience-card .role-label {
           font-size: 0.75rem;
-          color: var(--gold);
+          color: #ffe600;
+          font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.14em;
           font-weight: 600;
@@ -402,9 +408,10 @@ export default function LandingPage() {
         .check-icon {
           flex-shrink: 0;
           width: 18px; height: 18px;
-          background: rgba(201, 162, 39, 0.2);
-          border: 1px solid rgba(201, 162, 39, 0.5);
-          border-radius: 50%;
+          background: #ffe600;
+          border: none;
+          color: #0a0a0a !important;
+          font-weight: 800;
           display: flex; align-items: center; justify-content: center;
           color: var(--gold);
           font-size: 0.7rem;
@@ -421,9 +428,9 @@ export default function LandingPage() {
         .principle {
           padding: 1.75rem;
           background: var(--surface);
-          border: 1px solid var(--hairline);
-          border-left: 3px solid var(--navy-600);
-          border-radius: 8px;
+          border: 2px solid #0a0a0a;
+          border-left: 8px solid #ffe600;
+          border-radius: 0;
         }
         .principle h4 {
           font-family: 'Fraunces', serif;
@@ -446,18 +453,18 @@ export default function LandingPage() {
         }
         .tech-pill {
           background: var(--surface);
-          border: 1px solid var(--hairline);
+          border: 2px solid #0a0a0a;
           padding: 0.55rem 1.1rem;
-          border-radius: 100px;
+          border-radius: 0;
           font-size: 0.87rem;
-          color: var(--muted);
+          font-weight: 700;
+          color: #0a0a0a;
           font-family: 'JetBrains Mono', monospace;
-          transition: all 0.2s;
+          box-shadow: 3px 3px 0 #0a0a0a;
+          transition: none;
         }
         .tech-pill:hover {
-          border-color: var(--navy-600);
-          color: var(--navy-700);
-          transform: translateY(-1px);
+          background: #ffe600;
         }
 
         /* ---------- STATUS SECTION ---------- */
@@ -472,8 +479,8 @@ export default function LandingPage() {
           text-align: center;
           padding: 2rem 1.5rem;
           background: var(--surface);
-          border: 1px solid var(--hairline);
-          border-radius: 10px;
+          border: 2px solid #0a0a0a;
+          border-radius: 0;
         }
         .status-card-number {
           font-family: 'Fraunces', serif;
@@ -499,7 +506,7 @@ export default function LandingPage() {
 
         /* ---------- CTA ---------- */
         .cta-section {
-          background: linear-gradient(135deg, #061735 0%, #0a1f44 50%, #1e3a8a 100%);
+          background: #0a0a0a; border: 3px solid #ffe600;
           color: #fff;
           padding: 5rem 0;
           text-align: center;
@@ -546,7 +553,7 @@ export default function LandingPage() {
         .landing-footer {
           background: var(--surface-soft);
           padding: 3rem 0 2rem;
-          border-top: 1px solid var(--hairline);
+          border-top: 3px solid #0a0a0a;
         }
         .footer-inner {
           max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
@@ -581,7 +588,7 @@ export default function LandingPage() {
         .footer-col a:hover { color: var(--navy-700); }
         .footer-bottom {
           max-width: 1200px; margin: 2.5rem auto 0; padding: 1.75rem 1.5rem 0;
-          border-top: 1px solid var(--hairline);
+          border-top: 3px solid #0a0a0a;
           display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
           font-size: 0.82rem;
           color: var(--muted-2);
@@ -605,7 +612,7 @@ export default function LandingPage() {
             background: transparent; border: none; cursor: pointer;
             padding: 0.5rem;
           }
-          .mobile-nav-toggle span { width: 22px; height: 2px; background: #fff; border-radius: 2px; }
+          .mobile-nav-toggle span { width: 22px; height: 2px; background: #fff; border-radius: 0; }
           .landing-hero { padding: 3.5rem 0 5rem; }
           .flow-step { grid-template-columns: 1fr; gap: 0.75rem; padding: 1.75rem; }
           .flow-number { font-size: 2rem; }
@@ -883,9 +890,9 @@ export default function LandingPage() {
             <span className="tech-pill">Next.js 15</span>
             <span className="tech-pill">TypeScript</span>
             <span className="tech-pill">Convex</span>
-            <span className="tech-pill">Clerk</span>
+            <span className="tech-pill">Firebase Auth</span>
             <span className="tech-pill">Tailwind CSS</span>
-            <span className="tech-pill">shadcn/ui</span>
+            <span className="tech-pill">React 19</span>
             <span className="tech-pill">DeepSeek V2 via NVIDIA NIM</span>
             <span className="tech-pill">Vector retrieval</span>
             <span className="tech-pill">Vercel</span>

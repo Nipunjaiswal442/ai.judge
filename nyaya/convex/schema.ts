@@ -9,8 +9,8 @@ export default defineSchema({
     barCouncilId: v.optional(v.string()),
     verifiedAt: v.optional(v.number()),
     jurisdiction: v.optional(v.string()),
-    clerkId: v.string(),
-  }).index("by_email", ["email"]).index("by_clerkId", ["clerkId"]),
+    authId: v.string(), // Firebase Auth UID
+  }).index("by_email", ["email"]).index("by_authId", ["authId"]),
 
   cases: defineTable({
     humanId: v.string(), // e.g. CPA-2026-DCDRC-AP-0001

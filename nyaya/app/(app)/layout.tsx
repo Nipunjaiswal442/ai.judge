@@ -4,6 +4,9 @@ import Chakra from "@/components/ui/chakra";
 import SignOutButton from "@/components/ui/SignOutButton";
 import { getServerUser } from "@/lib/serverUser";
 
+// Every route in this group depends on the session cookie — never prerender.
+export const dynamic = "force-dynamic";
+
 function ScaleIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -70,7 +73,7 @@ function InfoIcon() {
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getServerUser();
-  if (!user) redirect("/sign-in?from=app");
+  if (!user) redirect("/sign-in");
 
   const isJudge = user.role === "JUDGE";
 
