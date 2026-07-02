@@ -1,9 +1,17 @@
 import OpenAI from "openai";
 
-const client = new OpenAI({
-  baseURL: "https://integrate.api.nvidia.com/v1",
-  apiKey: process.env.NVIDIA_API_KEY,
-});
+// Constructed lazily: the OpenAI constructor throws when no API key is
+// present, which breaks Convex's module analysis during deploys.
+let _client: OpenAI | null = null;
+function client() {
+  if (!_client) {
+    _client = new OpenAI({
+      baseURL: "https://integrate.api.nvidia.com/v1",
+      apiKey: process.env.NVIDIA_API_KEY,
+    });
+  }
+  return _client;
+}
 
 export const generateBrief = async (caseDetails: any, precedents: any[]) => {
   const SYSTEM_INSTRUCTION = `You are a legal analysis assistant for Indian consumer dispute matters. You are not a judge, not a lawyer, and you do not give legal advice. Your role is to structure information. Never fabricate case citations. If you do not have grounded information, say so explicitly. All outputs are advisory only.
@@ -29,7 +37,7 @@ export const generateBrief = async (caseDetails: any, precedents: any[]) => {
   ];
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await client().chat.completions.create({
       model: "deepseek-ai/deepseek-v3.2",
       messages,
       temperature: 0.1,
@@ -117,7 +125,7 @@ ${JSON.stringify(precedents, null, 2)}`,
   ];
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await client().chat.completions.create({
       model: "deepseek-ai/deepseek-v3.2",
       messages,
       temperature: 0.1,
