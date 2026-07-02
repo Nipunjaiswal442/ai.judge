@@ -5,9 +5,18 @@ import { getAdminAuth, SESSION_COOKIE_NAME, SESSION_MAX_AGE_MS } from "@/lib/fir
 // Exchange a Firebase ID token for a long-lived httpOnly session cookie.
 export async function POST(req: Request) {
   try {
+    const missing = ["FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY"]
+      .filter((k) => !process.env[k]);
+    if (missing.length > 0) {
+      return NextResponse.json(
+        { error: `Server is missing environment variables: ${missing.join(", ")}. Add them in Vercel and redeploy.` },
+        { status: 500 }
+      );
+    }
+
     const adminAuth = getAdminAuth();
     if (!adminAuth) {
-      return NextResponse.json({ error: "Auth is not configured on the server." }, { status: 500 });
+      return NextResponse.json({ error: "Firebase admin could not initialize." }, { status: 500 });
     }
 
     const { idToken } = await req.json();
@@ -31,7 +40,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Session create error:", error);
-    return NextResponse.json({ error: "Could not create session." }, { status: 401 });
+    // Surface the underlying cause: bad private-key formatting and project
+    // mismatches are the two common failure modes on Vercel.
+    const detail = error instanceof Error ? error.message : "Unknown error";
+    const hint = /parse private key|DECODER|PEM/i.test(detail)
+      ? " — FIREBASE_PRIVATE_KEY is malformed in Vercel. Re-paste it exactly as it appears in .env.local (with the \\n sequences, no surrounding quotes)."
+      : "";
+    return NextResponse.json({ error: `Session failed: ${detail}${hint}` }, { status: 401 });
   }
 }
 
