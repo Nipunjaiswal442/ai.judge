@@ -147,7 +147,7 @@ export default function NewCaseClient({ userId }: { userId: Id<"users"> }) {
       </div>
 
       {error && (
-        <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--red-bg)", color: "var(--red)", borderRadius: 8, fontSize: 13, border: "1px solid color-mix(in oklch, var(--red) 30%, transparent)" }}>
+        <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--red-bg)", color: "var(--red)", borderRadius: 0, fontSize: 13, border: "2px solid color-mix(in oklch, var(--red) 30%, transparent)" }}>
           {error}
         </div>
       )}
@@ -177,7 +177,7 @@ export default function NewCaseClient({ userId }: { userId: Id<"users"> }) {
             </div>
 
             {category && (
-              <div className="advisory-pill" style={{ marginTop: 18, background: "var(--primary-bg)", border: "1px solid color-mix(in oklch, var(--primary) 18%, transparent)", color: "var(--primary)" }}>
+              <div className="advisory-pill" style={{ marginTop: 18, background: "var(--primary-bg)", border: "2px solid color-mix(in oklch, var(--primary) 18%, transparent)", color: "var(--primary)" }}>
                 <SparklesIcon />
                 <div>
                   <strong>Q&amp;A template preview — {selectedCat?.label}</strong>
@@ -252,7 +252,7 @@ export default function NewCaseClient({ userId }: { userId: Id<"users"> }) {
             </div>
 
             {formData.opposingLawyerEmailInvite && (
-              <div style={{ marginTop: 18, padding: 14, border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-2)" }}>
+              <div style={{ marginTop: 18, padding: 14, border: "2px solid var(--border)", borderRadius: 0, background: "var(--bg-2)" }}>
                 <div className="cap-label">Email preview</div>
                 <div style={{ marginTop: 8, fontFamily: "var(--serif)", fontSize: 14 }}>
                   <strong>Subject:</strong> Notice of representation — {formData.complainantName || "Complainant"} v. {formData.opposingPartyName || "Opposing Party"} · Case ID pending

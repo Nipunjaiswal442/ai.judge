@@ -272,7 +272,7 @@ export default function JudgeDashboardClient() {
                   style={{ padding: "10px 18px", borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none", gap: 12, cursor: "pointer" }}
                   onClick={() => router.push(c.status === "BRIEF_GENERATED" || c.status === "JUDGE_REVIEWED" ? `/judge/cases/${c._id}` : `/judge/dashboard`)}
                 >
-                  <div style={{ width: 38, textAlign: "center", padding: "3px 0", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-2)" }}>
+                  <div style={{ width: 38, textAlign: "center", padding: "3px 0", border: "2px solid var(--border)", borderRadius: 0, background: "var(--bg-2)" }}>
                     <div className="cap-label" style={{ fontSize: 8, color: c.status === "BRIEF_GENERATED" ? "var(--green)" : "var(--text-4)" }}>
                       {c.status === "BRIEF_GENERATED" ? "READY" : c.status === "JUDGE_REVIEWED" ? "DONE" : "WIP"}
                     </div>
@@ -299,7 +299,7 @@ export default function JudgeDashboardClient() {
         <div className="card">
           <div className="card-head">
             <div className="row" style={{ gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--primary-bg)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
+              <div style={{ width: 36, height: 36, borderRadius: 0, background: "var(--primary-bg)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
                 <BotIcon />
               </div>
               <div>
@@ -326,15 +326,15 @@ export default function JudgeDashboardClient() {
             </div>
 
             {/* Chat */}
-            <div style={{ borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-2)", padding: 12, display: "flex", flexDirection: "column", gap: 8, maxHeight: 340, overflowY: "auto" }}>
+            <div style={{ borderRadius: 0, border: "2px solid var(--border)", background: "var(--bg-2)", padding: 12, display: "flex", flexDirection: "column", gap: 8, maxHeight: 340, overflowY: "auto" }}>
               {messages.map((m, i) => (
                 <div
                   key={i}
                   style={{
-                    borderRadius: 7, padding: "10px 14px", fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap",
+                    borderRadius: 0, padding: "10px 14px", fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap",
                     ...(m.role === "judge"
                       ? { background: "var(--primary)", color: "white", marginLeft: 32 }
-                      : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-2)", marginRight: 32 })
+                      : { background: "var(--surface)", border: "2px solid var(--border)", color: "var(--text-2)", marginRight: 32 })
                   }}
                 >
                   {m.content}
@@ -343,7 +343,7 @@ export default function JudgeDashboardClient() {
             </div>
 
             {chatErr && (
-              <div style={{ padding: "8px 12px", background: "var(--red-bg)", color: "var(--red)", borderRadius: 7, fontSize: 12 }}>{chatErr}</div>
+              <div style={{ padding: "8px 12px", background: "var(--red-bg)", color: "var(--red)", borderRadius: 0, fontSize: 12 }}>{chatErr}</div>
             )}
 
             {/* Input */}

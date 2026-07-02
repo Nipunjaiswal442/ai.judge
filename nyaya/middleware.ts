@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = [/^\/$/, /^\/sign-in/, /^\/sign-up/, /^\/api\/auth\//];
+const PUBLIC_ROUTES = [/^\/$/, /^\/sign-in/, /^\/sign-up/, /^\/api\/auth\//, /^\/api\/(ping|diag)$/];
 
 // Fast cookie-presence gate. Real verification (signature + expiry) happens
 // server-side in layouts via lib/serverUser.ts — firebase-admin cannot run on

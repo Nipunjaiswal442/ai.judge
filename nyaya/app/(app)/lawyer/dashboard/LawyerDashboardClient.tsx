@@ -254,7 +254,7 @@ export default function LawyerDashboardClient({ userId }: { userId: Id<"users"> 
             <div className="card-body" style={{ padding: 0 }}>
               {cases.slice(0, 4).map((c: any, i: number, arr: any[]) => (
                 <div key={c._id} className="row" style={{ padding: "12px 18px", borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none", gap: 12 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 6, background: "var(--bg-2)", display: "grid", placeItems: "center", color: "var(--primary)", flexShrink: 0 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 0, background: "var(--bg-2)", display: "grid", placeItems: "center", color: "var(--primary)", flexShrink: 0 }}>
                     <SparklesIcon />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -279,7 +279,7 @@ export default function LawyerDashboardClient({ userId }: { userId: Id<"users"> 
             <div className="card-body" style={{ padding: 0 }}>
               {cases.filter((c: any) => c.status !== "JUDGE_REVIEWED").slice(0, 4).map((c: any, i: number, arr: any[]) => (
                 <div key={c._id} onClick={() => router.push(`/lawyer/cases/${c._id}`)} style={{ cursor: "pointer", padding: "12px 18px", borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none", display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ display: "grid", placeItems: "center", width: 44, padding: "4px 0", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-2)" }}>
+                  <div style={{ display: "grid", placeItems: "center", width: 44, padding: "4px 0", border: "2px solid var(--border)", borderRadius: 0, background: "var(--bg-2)" }}>
                     <div className="cap-label" style={{ fontSize: 9 }}>{c.status === "DRAFT" ? "DRAFT" : "ACT"}</div>
                     <div className="serif tnum" style={{ fontSize: 16, fontWeight: 500, lineHeight: 1, marginTop: 2 }}>
                       {statusProgress(c.status)}%

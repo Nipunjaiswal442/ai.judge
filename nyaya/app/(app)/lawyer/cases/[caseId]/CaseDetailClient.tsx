@@ -65,7 +65,7 @@ function QAEntry({
         <>
           <p style={{ margin: 0, fontSize: 14, lineHeight: 1.75, color: "var(--text)" }}>{entry.answerText}</p>
           {entry.aiFollowUpNeeded && entry.aiFollowUpNote && (
-            <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 8, background: "var(--primary-bg)", border: "1px solid color-mix(in oklch, var(--primary) 18%, transparent)", display: "flex", gap: 12 }}>
+            <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 0, background: "var(--primary-bg)", border: "2px solid color-mix(in oklch, var(--primary) 18%, transparent)", display: "flex", gap: 12 }}>
               <SparklesIcon />
               <div style={{ flex: 1, fontSize: 13, lineHeight: 1.6, color: "var(--text-2)" }}>
                 <strong style={{ display: "block", marginBottom: 4 }}>Nyāya follow-up</strong>
@@ -272,7 +272,7 @@ export default function CaseDetailClient({
       {/* ── CENTER: active Q&A ── */}
       <main className="qa-main">
         {error && (
-          <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--red-bg)", color: "var(--red)", borderRadius: 8, fontSize: 13, border: "1px solid color-mix(in oklch, var(--red) 30%, transparent)" }}>
+          <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--red-bg)", color: "var(--red)", borderRadius: 0, fontSize: 13, border: "2px solid color-mix(in oklch, var(--red) 30%, transparent)" }}>
             {error}
           </div>
         )}
@@ -324,7 +324,7 @@ export default function CaseDetailClient({
             <div className="card">
               <div className="card-head">
                 <div className="row" style={{ gap: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 6, background: side === "COMPLAINANT" ? "var(--blue-bg,#eff6ff)" : "var(--gold-bg,#fffbeb)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 0, background: side === "COMPLAINANT" ? "var(--blue-bg,#eff6ff)" : "var(--gold-bg,#fffbeb)", display: "grid", placeItems: "center", flexShrink: 0 }}>
                     <span style={{ fontSize: 11, fontWeight: 600, color: side === "COMPLAINANT" ? "var(--blue,#2563eb)" : "var(--gold,#d97706)" }}>
                       {side === "COMPLAINANT" ? "C" : "O"}{activeIdx + 1}
                     </span>
@@ -367,13 +367,13 @@ export default function CaseDetailClient({
             )}
 
             {submitted && (
-              <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--green-bg,#f0fdf4)", border: "1px solid color-mix(in oklch, var(--green) 30%, transparent)", borderRadius: 8, fontSize: 13, color: "var(--green,#16a34a)" }}>
+              <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--green-bg,#f0fdf4)", border: "2px solid color-mix(in oklch, var(--green) 30%, transparent)", borderRadius: 0, fontSize: 13, color: "var(--green,#16a34a)" }}>
                 <LockIcon /> Your submission is locked. Awaiting the other side or judge review.
               </div>
             )}
 
             {side === "COMPLAINANT" && caseData.status === "READY_FOR_BRIEF" && (
-              <div style={{ marginTop: 16, padding: "14px 18px", background: "var(--amber-bg,#fffbeb)", border: "1px solid color-mix(in oklch, var(--amber,#d97706) 30%, transparent)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ marginTop: 16, padding: "14px 18px", background: "var(--amber-bg,#fffbeb)", border: "2px solid color-mix(in oklch, var(--amber,#d97706) 30%, transparent)", borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                 <p style={{ margin: 0, fontSize: 13, color: "var(--text-2)" }}>
                   Both sides have submitted. You can trigger the AI advisory brief now.
                 </p>
@@ -384,7 +384,7 @@ export default function CaseDetailClient({
             )}
 
             {(caseData.status === "BRIEF_GENERATED" || caseData.status === "JUDGE_REVIEWED") && (
-              <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--green-bg,#f0fdf4)", border: "1px solid color-mix(in oklch, var(--green) 30%, transparent)", borderRadius: 8, fontSize: 13, color: "var(--green,#16a34a)" }}>
+              <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--green-bg,#f0fdf4)", border: "2px solid color-mix(in oklch, var(--green) 30%, transparent)", borderRadius: 0, fontSize: 13, color: "var(--green,#16a34a)" }}>
                 Advisory brief generated. It is now with the assigned judge for review.
               </div>
             )}
@@ -402,7 +402,7 @@ export default function CaseDetailClient({
           </div>
           <div style={{ fontSize: 13 }}>
             <div className="row" style={{ gap: 10, padding: "8px 0" }}>
-              <div style={{ width: 28, height: 28, borderRadius: 6, background: "var(--blue-bg,#eff6ff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 0, background: "var(--blue-bg,#eff6ff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: "var(--blue,#2563eb)" }}>C</span>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -411,7 +411,7 @@ export default function CaseDetailClient({
               </div>
             </div>
             <div className="row" style={{ gap: 10, padding: "8px 0", borderTop: "1px dashed var(--border)" }}>
-              <div style={{ width: 28, height: 28, borderRadius: 6, background: "var(--gold-bg,#fffbeb)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 0, background: "var(--gold-bg,#fffbeb)", display: "grid", placeItems: "center", flexShrink: 0 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: "var(--gold,#d97706)" }}>O</span>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -451,7 +451,7 @@ export default function CaseDetailClient({
             <SparklesIcon />
             <div className="cap-label" style={{ color: "var(--primary)" }}>Nyāya assistant</div>
           </div>
-          <div style={{ padding: 12, borderRadius: 8, background: "var(--primary-bg)", fontSize: 12.5, lineHeight: 1.55, color: "var(--text-2)" }}>
+          <div style={{ padding: 12, borderRadius: 0, background: "var(--primary-bg)", fontSize: 12.5, lineHeight: 1.55, color: "var(--text-2)" }}>
             {side === "COMPLAINANT"
               ? "You are the complainant counsel. Answer each question with specific facts, dates, and document references. The AI will use your responses to generate an advisory brief for the bench."
               : side === "OPPOSING"

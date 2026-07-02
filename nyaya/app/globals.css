@@ -40,7 +40,7 @@
   /* Accents — loud and flat */
   --gold:       #b8860b;
   --gold-2:     #e6a817;
-  --gold-bg:    #ffe600;
+  --gold-bg:    #f2dc7d;
   --saffron:    #ff6d00;
   --green:      #0a5c2e;
   --green-bg:   #7dffb3;
@@ -66,10 +66,10 @@
   --text-4:       var(--ink-400);
   --primary:      #0a0a0a;
   --primary-2:    #2b2b2b;
-  --primary-bg:   #ffe600;
+  --primary-bg:   #6fa8ff;
   --primary-text: #ffffff;
-  --accent:       #ffe600;
-  --accent-bg:    #ffe600;
+  --accent:       #6fa8ff;
+  --accent-bg:    #6fa8ff;
 
   /* Typography */
   --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;

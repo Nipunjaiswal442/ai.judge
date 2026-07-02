@@ -156,7 +156,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
         <div className="col" style={{ gap: 10 }}>
           {brief.agreedFacts?.map((fact: string, i: number) => (
             <div key={i} className="row" style={{ alignItems: "flex-start", gap: 10 }}>
-              <div style={{ width: 20, height: 20, borderRadius: 5, background: "var(--green-bg,#f0fdf4)", color: "var(--green,#16a34a)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
+              <div style={{ width: 20, height: 20, borderRadius: 0, background: "var(--green-bg,#f0fdf4)", color: "var(--green,#16a34a)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
                 <CheckIcon />
               </div>
               <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.7, color: "var(--text)" }}>{fact}</p>
@@ -170,7 +170,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
       return (
         <div className="col" style={{ gap: 14 }}>
           {brief.disputedFacts?.map((df, i) => (
-            <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", background: "var(--surface)" }}>
+            <div key={i} style={{ border: "2px solid var(--border)", borderRadius: 0, overflow: "hidden", background: "var(--surface)" }}>
               <div style={{ padding: "10px 16px", background: "var(--bg-2)", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div className="row" style={{ gap: 8 }}>
                   <span className="cap-label">Dispute {i + 1}</span>
@@ -197,7 +197,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
       return (
         <div className="col" style={{ gap: 12 }}>
           {brief.applicableLaw?.map((law, i) => (
-            <div key={i} style={{ padding: 14, border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface)" }}>
+            <div key={i} style={{ padding: 14, border: "2px solid var(--border)", borderRadius: 0, background: "var(--surface)" }}>
               <div className="row" style={{ gap: 8, marginBottom: 8 }}>
                 <BookIcon />
                 <strong style={{ fontSize: 13.5 }}>{law.statute} — {law.section}</strong>
@@ -216,7 +216,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
       return (
         <div className="col" style={{ gap: 10 }}>
           {listed.map((p) => (
-            <div key={p._id} style={{ padding: 14, border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface)" }}>
+            <div key={p._id} style={{ padding: 14, border: "2px solid var(--border)", borderRadius: 0, background: "var(--surface)" }}>
               <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="serif" style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.25 }}>{p.title}</div>
@@ -238,8 +238,8 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
       return (
         <div className="col" style={{ gap: 10 }}>
           {brief.proceduralFlags.map((f: string, i: number) => (
-            <div key={i} className="row" style={{ padding: 14, border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface)", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 6, display: "grid", placeItems: "center", flexShrink: 0, background: "var(--red-bg)", color: "var(--red,#dc2626)" }}>
+            <div key={i} className="row" style={{ padding: 14, border: "2px solid var(--border)", borderRadius: 0, background: "var(--surface)", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 0, display: "grid", placeItems: "center", flexShrink: 0, background: "var(--red-bg)", color: "var(--red,#dc2626)" }}>
                 <AlertIcon />
               </div>
               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55 }}>{f}</p>
@@ -256,7 +256,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
       return (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {brief.evidentiaryGaps.map((g: string, i: number) => (
-            <div key={i} style={{ padding: 14, border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface)" }}>
+            <div key={i} style={{ padding: 14, border: "2px solid var(--border)", borderRadius: 0, background: "var(--surface)" }}>
               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>{g}</p>
             </div>
           ))}
@@ -268,8 +268,8 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
       return (
         <div>
           <div className="row" style={{ gap: 16, alignItems: "center", marginBottom: 16 }}>
-            <div style={{ flex: 1, height: 12, borderRadius: 6, background: "var(--bg-2)", overflow: "hidden", border: "1px solid var(--border)" }}>
-              <div style={{ height: "100%", background: "linear-gradient(to right, var(--amber,#d97706), var(--green,#16a34a))", width: `${brief.confidenceScore ?? 0}%`, borderRadius: 6 }} />
+            <div style={{ flex: 1, height: 12, borderRadius: 0, background: "var(--bg-2)", overflow: "hidden", border: "2px solid var(--border)" }}>
+              <div style={{ height: "100%", background: "var(--green)", width: `${brief.confidenceScore ?? 0}%`, borderRadius: 0 }} />
             </div>
             <span className="serif" style={{ fontSize: 28, fontWeight: 500, minWidth: 60 }}>{brief.confidenceScore ?? 0}%</span>
           </div>
@@ -285,7 +285,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
         <div className="col" style={{ gap: 10 }}>
           {brief.caveats?.map((c: string, i: number) => (
             <div key={i} className="row" style={{ alignItems: "flex-start", gap: 10 }}>
-              <div style={{ width: 20, height: 20, borderRadius: 5, background: "var(--red-bg)", color: "var(--red,#dc2626)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
+              <div style={{ width: 20, height: 20, borderRadius: 0, background: "var(--red-bg)", color: "var(--red,#dc2626)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
                 <AlertIcon />
               </div>
               <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "var(--text)", fontWeight: 500 }}>{c}</p>
@@ -307,7 +307,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
             <SparklesIcon size={13} />
             <span className="cap-label">Source · Model trace</span>
           </div>
-          <div style={{ padding: 14, borderRadius: 10, background: "var(--bg-2)", fontSize: 12.5, lineHeight: 1.7 }}>
+          <div style={{ padding: 14, borderRadius: 0, background: "var(--bg-2)", fontSize: 12.5, lineHeight: 1.7 }}>
             {[
               { k: "Model", v: "claude-sonnet-4-6" },
               { k: "Generated", v: brief._creationTime ? new Date(brief._creationTime).toLocaleString("en-IN") : "—" },
@@ -383,7 +383,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
             <span className="muted tnum" style={{ fontSize: 11 }}>{caseData.jurisdiction}</span>
           </div>
 
-          <div className="row" style={{ marginTop: 14, gap: 10, padding: 10, background: "var(--bg-2)", borderRadius: 8, border: "1px solid var(--border)" }}>
+          <div className="row" style={{ marginTop: 14, gap: 10, padding: 10, background: "var(--bg-2)", borderRadius: 0, border: "2px solid var(--border)" }}>
             <div style={{ position: "relative", width: 36, height: 36, flexShrink: 0 }}>
               <svg width="36" height="36" viewBox="0 0 36 36">
                 <circle cx="18" cy="18" r="15" fill="none" stroke="var(--border-2)" strokeWidth="3"/>
@@ -413,7 +413,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
               onClick={() => setActiveSection(s.id)}
               className="row"
               style={{
-                width: "100%", textAlign: "left", padding: "10px 12px", borderRadius: 6,
+                width: "100%", textAlign: "left", padding: "10px 12px", borderRadius: 0,
                 background: s.id === activeSection ? "var(--primary-bg)" : "transparent",
                 color: s.id === activeSection ? "var(--primary)" : "var(--text)",
                 border: "none", marginBottom: 2, gap: 8, cursor: "pointer",
@@ -473,7 +473,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
         {renderSection()}
 
         {/* Private notes */}
-        <div style={{ marginTop: 28, padding: 16, border: "1px dashed var(--border-2)", borderRadius: 10, background: "var(--bg-2)" }}>
+        <div style={{ marginTop: 28, padding: 16, border: "2px dashed var(--border-2)", borderRadius: 0, background: "var(--bg-2)" }}>
           <div className="row" style={{ marginBottom: 8, gap: 8 }}>
             <LockIcon />
             <span className="cap-label">Private notes (only you)</span>

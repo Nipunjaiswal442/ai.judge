@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function GlobalError({
   error,
@@ -10,6 +10,8 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     console.error("App error boundary caught:", error);
   }, [error]);
@@ -19,33 +21,39 @@ export default function GlobalError({
     error.message?.includes("Validator") ||
     error.message?.includes("ArgumentValidationError");
 
+  const handleSignOutRestart = async () => {
+    await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
+    router.replace("/sign-in");
+    router.refresh();
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#061735] via-[#0a1f44] to-[#1e3a8a] text-white p-6">
-      <div className="max-w-md w-full bg-white text-slate-900 rounded-xl p-8 shadow-xl space-y-4">
-        <h1 className="text-2xl font-heading font-bold text-[#0a1f44]">
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--ink-900, #0a0a0a)", padding: 24 }}>
+      <div style={{ maxWidth: 440, width: "100%", background: "#fff", border: "3px solid #0a0a0a", boxShadow: "8px 8px 0 #6fa8ff", padding: 28 }}>
+        <h1 style={{ fontFamily: "var(--serif, Georgia)", fontSize: 26, fontWeight: 800, textTransform: "uppercase", margin: "0 0 10px", color: "#0a0a0a" }}>
           Something went wrong
         </h1>
-        <p className="text-sm text-slate-600">
+        <p style={{ fontSize: 13, color: "#3a3a3a", margin: "0 0 14px", lineHeight: 1.6 }}>
           {looksLikeStaleSession
-            ? "Your sign-in session is out of date. Please sign in again to continue."
+            ? "Your sign-in session is out of date. Sign in again to continue."
             : "An unexpected error occurred."}
         </p>
-        <pre className="text-xs bg-slate-50 border border-slate-200 rounded p-3 overflow-auto max-h-32">
+        <pre style={{ fontSize: 11, background: "#f5f1e6", border: "2px solid #0a0a0a", padding: 10, overflow: "auto", maxHeight: 120, margin: "0 0 18px" }}>
           {error.message}
         </pre>
-        <div className="flex gap-2">
+        <div style={{ display: "flex", gap: 10 }}>
           <button
             onClick={() => reset()}
-            className="px-4 py-2 rounded bg-slate-100 text-slate-800 text-sm"
+            style={{ padding: "10px 16px", border: "2px solid #0a0a0a", background: "#fff", color: "#0a0a0a", fontWeight: 800, fontSize: 12, textTransform: "uppercase", cursor: "pointer", boxShadow: "3px 3px 0 #0a0a0a" }}
           >
             Try again
           </button>
-          <Link
-            href="/api/auth/signout?callbackUrl=/sign-in"
-            className="px-4 py-2 rounded bg-[#0a1f44] text-white text-sm"
+          <button
+            onClick={handleSignOutRestart}
+            style={{ padding: "10px 16px", border: "2px solid #0a0a0a", background: "#0a0a0a", color: "#fff", fontWeight: 800, fontSize: 12, textTransform: "uppercase", cursor: "pointer", boxShadow: "3px 3px 0 #6fa8ff" }}
           >
-            Sign out & restart
-          </Link>
+            Sign out &amp; restart
+          </button>
         </div>
       </div>
     </div>

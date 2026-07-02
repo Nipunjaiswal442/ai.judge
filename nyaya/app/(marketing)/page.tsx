@@ -15,7 +15,7 @@ export default function LandingPage() {
           --navy-600: #2b2b2b;
           --navy-500: #3d3d3d;
           --navy-300: #8a8a8a;
-          --gold: #ffe600;
+          --gold: #6fa8ff;
           --gold-muted: #b8860b;
           --ink: #0a0a0a;
           --muted: #3a3a3a;
@@ -40,7 +40,7 @@ export default function LandingPage() {
         .landing-nav {
           position: sticky; top: 0; z-index: 50;
           background: #0a0a0a;
-          border-bottom: 4px solid #ffe600;
+          border-bottom: 4px solid #6fa8ff;
         }
         .nav-inner {
           display: flex; align-items: center; justify-content: space-between;
@@ -63,7 +63,7 @@ export default function LandingPage() {
         }
         .nav-links a:hover { color: #fff; }
         .nav-cta {
-          background: #ffe600; color: #0a0a0a !important;
+          background: #6fa8ff; color: #0a0a0a !important;
           font-weight: 800;
           text-transform: uppercase;
           padding: 0.55rem 1.1rem; border-radius: 0; font-weight: 500;
@@ -96,8 +96,8 @@ export default function LandingPage() {
         .hero-inner { position: relative; z-index: 2; text-align: center; max-width: 820px; margin: 0 auto; padding: 0 1.5rem; }
         .pre-launch-badge {
           display: inline-flex; align-items: center; gap: 0.5rem;
-          background: #ffe600;
-          border: 2px solid #ffe600;
+          background: #6fa8ff;
+          border: 2px solid #6fa8ff;
           color: #0a0a0a;
           font-weight: 800;
           text-transform: uppercase;
@@ -163,12 +163,12 @@ export default function LandingPage() {
           font-family: inherit;
         }
         .btn-primary {
-          background: #ffe600; color: #0a0a0a;
-          border: 2px solid #ffe600;
+          background: #6fa8ff; color: #0a0a0a;
+          border: 2px solid #6fa8ff;
           font-weight: 800;
           text-transform: uppercase;
         }
-        .btn-primary:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #ffe600; }
+        .btn-primary:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #6fa8ff; }
         .btn-secondary {
           background: transparent; color: #fff;
           border: 2px solid #fff;
@@ -201,7 +201,7 @@ export default function LandingPage() {
 
         /* ---------- DISCLOSURE BANNER ---------- */
         .disclosure {
-          background: #ffd23e;
+          background: #6fa8ff;
           border-top: 3px solid #0a0a0a;
           border-bottom: 3px solid #0a0a0a;
           padding: 1rem 0;
@@ -274,7 +274,7 @@ export default function LandingPage() {
         }
         .problem-icon {
           width: 44px; height: 44px;
-          background: #ffe600; color: #0a0a0a !important; border: 2px solid #0a0a0a;
+          background: #6fa8ff; color: #0a0a0a !important; border: 2px solid #0a0a0a;
           border-radius: 0;
           display: flex; align-items: center; justify-content: center;
           margin-bottom: 1.25rem;
@@ -344,8 +344,8 @@ export default function LandingPage() {
           margin-bottom: 0.75rem;
         }
         .who-lawyer { background: #a3c2ff; color: #0a0a0a; border: 2px solid #0a0a0a; }
-        .who-ai { background: #ffe600; color: #0a0a0a; border: 2px solid #0a0a0a; }
-        .who-judge { background: #0a0a0a; color: #ffe600; border: 2px solid #0a0a0a; }
+        .who-ai { background: #6fa8ff; color: #0a0a0a; border: 2px solid #0a0a0a; }
+        .who-judge { background: #0a0a0a; color: #6fa8ff; border: 2px solid #0a0a0a; }
 
         /* ---------- AUDIENCE SPLIT ---------- */
         .audience-grid {
@@ -357,7 +357,7 @@ export default function LandingPage() {
         .audience-card {
           background: #0a0a0a;
           border: 3px solid #0a0a0a;
-          box-shadow: 8px 8px 0 #ffe600;
+          box-shadow: 8px 8px 0 #6fa8ff;
           color: #fff;
           padding: 2.75rem;
           border-radius: 0;
@@ -380,7 +380,7 @@ export default function LandingPage() {
         }
         .audience-card .role-label {
           font-size: 0.75rem;
-          color: #ffe600;
+          color: #6fa8ff;
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.14em;
@@ -408,7 +408,7 @@ export default function LandingPage() {
         .check-icon {
           flex-shrink: 0;
           width: 18px; height: 18px;
-          background: #ffe600;
+          background: #6fa8ff;
           border: none;
           color: #0a0a0a !important;
           font-weight: 800;
@@ -429,7 +429,7 @@ export default function LandingPage() {
           padding: 1.75rem;
           background: var(--surface);
           border: 2px solid #0a0a0a;
-          border-left: 8px solid #ffe600;
+          border-left: 8px solid #6fa8ff;
           border-radius: 0;
         }
         .principle h4 {
@@ -464,7 +464,7 @@ export default function LandingPage() {
           transition: none;
         }
         .tech-pill:hover {
-          background: #ffe600;
+          background: #6fa8ff;
         }
 
         /* ---------- STATUS SECTION ---------- */
@@ -506,7 +506,7 @@ export default function LandingPage() {
 
         /* ---------- CTA ---------- */
         .cta-section {
-          background: #0a0a0a; border: 3px solid #ffe600;
+          background: #0a0a0a; border: 3px solid #6fa8ff;
           color: #fff;
           padding: 5rem 0;
           text-align: center;
