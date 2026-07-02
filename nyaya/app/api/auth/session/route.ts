@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const adminAuth = getAdminAuth();
+    const adminAuth = await getAdminAuth();
     if (!adminAuth) {
       return NextResponse.json({ error: "Firebase admin could not initialize." }, { status: 500 });
     }

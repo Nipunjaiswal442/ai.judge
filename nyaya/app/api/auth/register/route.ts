@@ -12,7 +12,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 // different role selected never overwrites the original role.
 export async function POST(req: Request) {
   try {
-    const adminAuth = getAdminAuth();
+    const adminAuth = await getAdminAuth();
     if (!adminAuth) {
       return NextResponse.json({ error: "Auth is not configured on the server." }, { status: 500 });
     }

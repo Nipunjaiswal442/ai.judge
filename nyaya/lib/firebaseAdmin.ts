@@ -1,7 +1,9 @@
-import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
-import { getAuth, type Auth } from "firebase-admin/auth";
+import type { Auth } from "firebase-admin/auth";
 
-let adminApp: App | null = null;
+// firebase-admin is loaded via dynamic import() only. Statically importing it
+// crashes the whole serverless function on Vercel (module-load failure before
+// any handler runs), while runtime dynamic import resolves fine.
+let adminAuth: Auth | null = null;
 
 // Tolerates the common paste mistakes: surrounding quotes, literal \n
 // sequences, and stray whitespace.
@@ -18,8 +20,8 @@ export function normalizePrivateKey(raw: string | undefined): string | undefined
   return key.includes("-----BEGIN") ? key : undefined;
 }
 
-function getAdminApp(): App | null {
-  if (adminApp) return adminApp;
+export async function getAdminAuth(): Promise<Auth | null> {
+  if (adminAuth) return adminAuth;
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -27,17 +29,16 @@ function getAdminApp(): App | null {
 
   if (!projectId || !clientEmail || !privateKey) return null;
 
-  adminApp =
+  const { cert, getApps, initializeApp } = await import("firebase-admin/app");
+  const { getAuth } = await import("firebase-admin/auth");
+
+  const app =
     getApps()[0] ??
     initializeApp({
       credential: cert({ projectId, clientEmail, privateKey }),
     });
-  return adminApp;
-}
-
-export function getAdminAuth(): Auth | null {
-  const app = getAdminApp();
-  return app ? getAuth(app) : null;
+  adminAuth = getAuth(app);
+  return adminAuth;
 }
 
 export const SESSION_COOKIE_NAME = "__session";

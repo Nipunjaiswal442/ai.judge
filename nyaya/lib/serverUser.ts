@@ -15,7 +15,7 @@ export const getServerUser = cache(async () => {
   if (!sessionCookie) return null;
 
   try {
-    const adminAuth = getAdminAuth();
+    const adminAuth = await getAdminAuth();
     if (!adminAuth) return null;
 
     const decoded = await adminAuth.verifySessionCookie(sessionCookie).catch(() => null);
