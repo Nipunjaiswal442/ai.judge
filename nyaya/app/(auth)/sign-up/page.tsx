@@ -10,7 +10,7 @@ import {
 } from "firebase/auth";
 import { firebaseAuth } from "@/lib/firebaseClient";
 import Chakra from "@/components/ui/chakra";
-import { dashboardForRole, searchRoleToSignInKey, signInRoleKeyToAppRole } from "@/lib/authRoles";
+import { counselTypeForRoleKey, dashboardForRole, searchRoleToSignInKey, signInRoleKeyToAppRole } from "@/lib/authRoles";
 
 function ArrowRIcon() {
   return (
@@ -69,7 +69,7 @@ function friendlyFirebaseError(error: unknown, fallback: string) {
   }
 }
 
-async function establishSession(user: User, name: string, role: string) {
+async function establishSession(user: User, name: string, role: string, roleKey: string) {
   const idToken = await user.getIdToken();
 
   const sessionRes = await fetch("/api/auth/session", {
@@ -85,7 +85,7 @@ async function establishSession(user: User, name: string, role: string) {
   const registerRes = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, role }),
+    body: JSON.stringify({ name, role, counselType: counselTypeForRoleKey(roleKey) }),
   });
   const data = (await registerRes.json().catch(() => ({}))) as RegisterResponse;
   if (!registerRes.ok) {
@@ -119,7 +119,7 @@ function SignUpContent() {
     try {
       const cred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
       await updateProfile(cred.user, { displayName: name }).catch(() => {});
-      const destination = await establishSession(cred.user, name, appRole);
+      const destination = await establishSession(cred.user, name, appRole, roleKey);
       router.replace(destination);
       router.refresh();
     } catch (err: unknown) {

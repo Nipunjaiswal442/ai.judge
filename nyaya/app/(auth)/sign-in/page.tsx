@@ -10,7 +10,7 @@ import {
 } from "firebase/auth";
 import { firebaseAuth, googleProvider } from "@/lib/firebaseClient";
 import Chakra from "@/components/ui/chakra";
-import { dashboardForRole, searchRoleToSignInKey, signInRoleKeyToAppRole } from "@/lib/authRoles";
+import { counselTypeForRoleKey, dashboardForRole, searchRoleToSignInKey, signInRoleKeyToAppRole } from "@/lib/authRoles";
 
 function ScaleIcon({ size = 16 }: { size?: number }) {
   return (
@@ -109,7 +109,7 @@ async function establishSession(user: User, roleKey: string) {
   const registerRes = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ role: appRole }),
+    body: JSON.stringify({ role: appRole, counselType: counselTypeForRoleKey(roleKey) }),
   });
   const data = (await registerRes.json().catch(() => ({}))) as RegisterResponse;
   if (!registerRes.ok) {

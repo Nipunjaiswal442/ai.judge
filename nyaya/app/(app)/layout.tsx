@@ -63,6 +63,13 @@ function CalendarIcon() {
     </svg>
   );
 }
+function UserIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
+    </svg>
+  );
+}
 function InfoIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -76,23 +83,40 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect("/sign-in");
 
   const isJudge = user.role === "JUDGE";
+  const isOpposing = user.counselType === "OPPOSING";
+  const workspaceLabel = isJudge
+    ? "Judge"
+    : isOpposing
+    ? "Opposing Counsel"
+    : "Complainant Counsel";
 
   const judgeNav = [
     { href: "/judge/dashboard", label: "Cases Assigned", icon: <ScaleIcon /> },
     { href: "/judge/dashboard", label: "Precedent Library", icon: <BookIcon /> },
     { href: "/judge/dashboard", label: "Audit Log", icon: <ShieldIcon /> },
     { href: "/judge/dashboard", label: "Calendar", icon: <CalendarIcon /> },
+    { href: "/profile", label: "My Profile", icon: <UserIcon /> },
   ];
 
-  const lawyerNav = [
+  const complainantNav = [
     { href: "/lawyer/dashboard", label: "My Cases", icon: <FilingIcon /> },
     { href: "/lawyer/cases/new", label: "File New Case", icon: <PlusIcon /> },
     { href: "/lawyer/dashboard", label: "Active Q&A", icon: <DocIcon /> },
     { href: "/lawyer/dashboard", label: "Document Vault", icon: <PaperclipIcon /> },
     { href: "/lawyer/dashboard", label: "Precedent Library", icon: <BookIcon /> },
+    { href: "/profile", label: "My Profile", icon: <UserIcon /> },
   ];
 
-  const navItems = isJudge ? judgeNav : lawyerNav;
+  const opposingNav = [
+    { href: "/lawyer/dashboard", label: "Defended Matters", icon: <FilingIcon /> },
+    { href: "/lawyer/dashboard", label: "Case Invitations", icon: <PlusIcon /> },
+    { href: "/lawyer/dashboard", label: "Active Q&A", icon: <DocIcon /> },
+    { href: "/lawyer/dashboard", label: "Document Vault", icon: <PaperclipIcon /> },
+    { href: "/lawyer/dashboard", label: "Precedent Library", icon: <BookIcon /> },
+    { href: "/profile", label: "My Profile", icon: <UserIcon /> },
+  ];
+
+  const navItems = isJudge ? judgeNav : isOpposing ? opposingNav : complainantNav;
 
   return (
     <div className="app">
@@ -109,19 +133,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         <div className="topbar-mid">
           <div className="crumbs">
-            <span>{isJudge ? "Judge" : "Counsel"}</span>
+            <span>{workspaceLabel}</span>
             <span className="sep">›</span>
             <span className="here">Workspace</span>
           </div>
         </div>
 
         <div className="topbar-right">
-          <div className="user-chip">
-            <div className="avatar" style={{ background: isJudge ? "var(--primary)" : "var(--blue)" }}>
+          <Link href="/profile" className="user-chip" title="My profile" style={{ textDecoration: "none", color: "inherit" }}>
+            <div className="avatar" style={{ background: isJudge ? "var(--primary)" : isOpposing ? "var(--gold, #d97706)" : "var(--blue)" }}>
               {user.initials}
             </div>
             <span className="name">{user.name.split(" ")[0]}</span>
-          </div>
+          </Link>
           <SignOutButton />
         </div>
       </header>

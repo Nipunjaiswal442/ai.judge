@@ -202,7 +202,7 @@ export default function JudgeDashboardClient() {
             </thead>
             <tbody>
               {filtered.map((c: any) => (
-                <tr key={c._id} onClick={() => router.push(c.status === "BRIEF_GENERATED" || c.status === "JUDGE_REVIEWED" ? `/judge/cases/${c._id}` : `/judge/dashboard`)}>
+                <tr key={c._id} onClick={() => router.push(`/judge/cases/${c._id}`)}>
                   <td>
                     <div className="row" style={{ gap: 8 }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: c.status === "BRIEF_GENERATED" ? "var(--green)" : c.status === "JUDGE_REVIEWED" ? "var(--text-4)" : "var(--amber)", flexShrink: 0 }} />
@@ -270,7 +270,7 @@ export default function JudgeDashboardClient() {
                   key={c._id}
                   className="row"
                   style={{ padding: "10px 18px", borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none", gap: 12, cursor: "pointer" }}
-                  onClick={() => router.push(c.status === "BRIEF_GENERATED" || c.status === "JUDGE_REVIEWED" ? `/judge/cases/${c._id}` : `/judge/dashboard`)}
+                  onClick={() => router.push(`/judge/cases/${c._id}`)}
                 >
                   <div style={{ width: 38, textAlign: "center", padding: "3px 0", border: "2px solid var(--border)", borderRadius: 0, background: "var(--bg-2)" }}>
                     <div className="cap-label" style={{ fontSize: 8, color: c.status === "BRIEF_GENERATED" ? "var(--green)" : "var(--text-4)" }}>

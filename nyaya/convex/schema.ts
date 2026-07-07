@@ -6,9 +6,13 @@ export default defineSchema({
     email: v.string(),
     name: v.string(),
     role: v.union(v.literal("JUDGE"), v.literal("LAWYER"), v.literal("ADMIN")),
+    // Which side of the bar a LAWYER account works from. Drives the
+    // complainant vs opposing dashboard experience.
+    counselType: v.optional(v.union(v.literal("COMPLAINANT"), v.literal("OPPOSING"))),
     barCouncilId: v.optional(v.string()),
     verifiedAt: v.optional(v.number()),
     jurisdiction: v.optional(v.string()),
+    phone: v.optional(v.string()),
     authId: v.string(), // Firebase Auth UID
   }).index("by_email", ["email"]).index("by_authId", ["authId"]),
 

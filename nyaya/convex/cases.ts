@@ -76,6 +76,26 @@ export const createCase = mutation({
   },
 });
 
+// Cases where this lawyer was invited as opposing counsel (by email) but has
+// not joined yet. Also surfaces open cases with no opposing counsel at all so
+// an opposing-side lawyer can pick up a matter in the prototype.
+export const getInvitationsForLawyer = query({
+  args: { email: v.string(), lawyerId: v.id("users") },
+  handler: async (ctx, args) => {
+    const all = await ctx.db.query("cases").collect();
+    const email = args.email.trim().toLowerCase();
+    return all
+      .filter(
+        (c) =>
+          !c.opposingLawyerId &&
+          c.complainantLawyerId !== args.lawyerId &&
+          (c.opposingLawyerEmailInvite?.trim().toLowerCase() === email ||
+            !c.opposingLawyerEmailInvite)
+      )
+      .sort((a, b) => b._creationTime - a._creationTime);
+  },
+});
+
 export const acceptOpposingCounsel = mutation({
   args: { caseId: v.id("cases"), lawyerId: v.id("users") },
   handler: async (ctx, args) => {

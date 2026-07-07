@@ -43,6 +43,9 @@ export const getServerUser = cache(async () => {
       authId: decoded.uid,
       convexId: convexUser._id as Id<"users">,
       role: convexUser.role,
+      counselType: (convexUser.counselType ?? null) as "COMPLAINANT" | "OPPOSING" | null,
+      barCouncilId: convexUser.barCouncilId ?? null,
+      jurisdiction: convexUser.jurisdiction ?? null,
       name: convexUser.name,
       email: convexUser.email,
       initials: convexUser.name

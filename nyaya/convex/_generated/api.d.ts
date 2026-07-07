@@ -9,12 +9,15 @@
  */
 
 import type * as analysis from "../analysis.js";
+import type * as analysisData from "../analysisData.js";
 import type * as audit from "../audit.js";
 import type * as cases from "../cases.js";
 import type * as documents from "../documents.js";
 import type * as judge from "../judge.js";
 import type * as precedents from "../precedents.js";
 import type * as qa from "../qa.js";
+import type * as research from "../research.js";
+import type * as seed from "../seed.js";
 import type * as users from "../users.js";
 
 import type {
@@ -25,12 +28,15 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   analysis: typeof analysis;
+  analysisData: typeof analysisData;
   audit: typeof audit;
   cases: typeof cases;
   documents: typeof documents;
   judge: typeof judge;
   precedents: typeof precedents;
   qa: typeof qa;
+  research: typeof research;
+  seed: typeof seed;
   users: typeof users;
 }>;
 

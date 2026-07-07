@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { getAdminAuth, SESSION_COOKIE_NAME } from "@/lib/firebaseAdmin";
-import { dashboardForRole, normalizeRole } from "@/lib/authRoles";
+import { dashboardForRole, normalizeCounselType, normalizeRole } from "@/lib/authRoles";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -29,10 +29,22 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const requestedRole = normalizeRole(body?.role);
+    const counselType = normalizeCounselType(body?.counselType);
     const nameFromBody = typeof body?.name === "string" ? body.name.trim() : "";
 
     const existing = await convex.query(api.users.getUserByAuthId, { authId: decoded.uid });
     if (existing) {
+      // Role never changes on sign-in, but a lawyer picking the other counsel
+      // side switches their workspace flavor (handled inside createUser).
+      if (existing.role === "LAWYER" && counselType && existing.counselType !== counselType) {
+        await convex.mutation(api.users.createUser, {
+          authId: decoded.uid,
+          email: existing.email,
+          name: existing.name,
+          role: existing.role,
+          counselType,
+        });
+      }
       return NextResponse.json({
         success: true,
         role: existing.role,
@@ -49,6 +61,7 @@ export async function POST(req: Request) {
       email,
       name,
       role: requestedRole,
+      counselType: requestedRole === "LAWYER" ? counselType || "COMPLAINANT" : undefined,
     });
 
     return NextResponse.json(

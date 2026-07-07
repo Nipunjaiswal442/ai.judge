@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import Link from "next/link";
@@ -26,6 +26,18 @@ function ClockIcon() {
 }
 function SparklesIcon() {
   return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6zM19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/></svg>;
+}
+function SendIcon() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>;
+}
+function BotIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M12 11V7M8 7h8a2 2 0 0 1 2 2v2H6V9a2 2 0 0 1 2-2zM9 15h.01M15 15h.01"/></svg>;
+}
+function BeakerIcon() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6M10 3v6.3L4.7 19a2 2 0 0 0 1.8 3h11a2 2 0 0 0 1.8-3L14 9.3V3"/></svg>;
+}
+function InboxIcon() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>;
 }
 
 // ── Helpers ────────────────────────────────────────────────
@@ -67,12 +79,94 @@ function categoryShort(cat: string): string {
   return cat.replace(/_/g, " ");
 }
 
+type ChatMsg = { role: "user" | "assistant"; content: string };
+
 // ── Main component ─────────────────────────────────────────
-export default function LawyerDashboardClient({ userId }: { userId: Id<"users"> }) {
+export default function LawyerDashboardClient({
+  userId,
+  email,
+  counselType,
+}: {
+  userId: Id<"users">;
+  email: string;
+  counselType: "COMPLAINANT" | "OPPOSING";
+}) {
   const cases = useQuery(api.cases.getLawyerCases, { lawyerId: userId });
+  const invitations = useQuery(api.cases.getInvitationsForLawyer, { email, lawyerId: userId });
+  const seedPrototype = useMutation(api.seed.seedPrototypeCase);
+  const acceptCase = useMutation(api.cases.acceptOpposingCounsel);
+  const askResearch = useAction(api.research.askCounselResearch);
   const router = useRouter();
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [seeding, setSeeding] = useState(false);
+  const [joining, setJoining] = useState<string | null>(null);
+  const [actionErr, setActionErr] = useState("");
+
+  // Research assistant chat state
+  const [researchCaseId, setResearchCaseId] = useState<string>("");
+  const [question, setQuestion] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [messages, setMessages] = useState<ChatMsg[]>([
+    {
+      role: "assistant",
+      content:
+        "I am your case research assistant (powered by DeepSeek). Ask me about CPA 2019 provisions, precedent strategy, or pick one of your cases for grounded Q&A on your own record.",
+    },
+  ]);
+
+  const isOpposing = counselType === "OPPOSING";
+
+  const handleSeedPrototype = async () => {
+    if (seeding) return;
+    setSeeding(true);
+    setActionErr("");
+    try {
+      const caseId = await seedPrototype({ lawyerId: userId });
+      router.push(`/lawyer/cases/${caseId}`);
+    } catch (e) {
+      setActionErr(e instanceof Error ? e.message : "Could not load the prototype case.");
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  const handleJoin = async (caseId: Id<"cases">) => {
+    if (joining) return;
+    setJoining(caseId);
+    setActionErr("");
+    try {
+      await acceptCase({ caseId, lawyerId: userId });
+      router.push(`/lawyer/cases/${caseId}`);
+    } catch (e) {
+      setActionErr(e instanceof Error ? e.message : "Could not join this case.");
+    } finally {
+      setJoining(null);
+    }
+  };
+
+  const handleAsk = async () => {
+    const q = question.trim();
+    if (!q || asking) return;
+    setAsking(true);
+    const history = messages.slice(1); // drop the canned greeting
+    setMessages(p => [...p, { role: "user", content: q }]);
+    setQuestion("");
+    try {
+      const resp = await askResearch({
+        lawyerId: userId,
+        caseId: researchCaseId ? (researchCaseId as Id<"cases">) : undefined,
+        question: q,
+        history,
+      });
+      setMessages(p => [...p, { role: "assistant", content: resp.answer }]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Research request failed.";
+      setMessages(p => [...p, { role: "assistant", content: `I could not complete that request: ${msg}` }]);
+    } finally {
+      setAsking(false);
+    }
+  };
 
   if (cases === undefined) {
     return (
@@ -122,18 +216,60 @@ export default function LawyerDashboardClient({ userId }: { userId: Id<"users"> 
       {/* Page head */}
       <div className="page-head">
         <div>
-          <h1 className="page-title">My Cases</h1>
-          <p className="page-sub">{activeCnt} active matters · Filing from your workspace</p>
+          <div className="cap-label">{isOpposing ? "Opposing Counsel Workspace" : "Complainant Counsel Workspace"}</div>
+          <h1 className="page-title" style={{ marginTop: 6 }}>{isOpposing ? "Defended Matters" : "My Cases"}</h1>
+          <p className="page-sub">
+            {activeCnt} active matters · {isOpposing ? "Defending opposite parties" : "Filing from your workspace"}
+          </p>
         </div>
         <div className="page-actions">
-          <button className="btn" onClick={() => router.push("/lawyer/dashboard")}>
-            <PaperclipIcon /> Document Vault
+          <button className="btn" onClick={handleSeedPrototype} disabled={seeding}>
+            <BeakerIcon /> {seeding ? "Loading…" : "Load Prototype Case"}
           </button>
-          <Link href="/lawyer/cases/new" className="btn primary">
-            <PlusIcon /> File New Case
-          </Link>
+          {!isOpposing && (
+            <Link href="/lawyer/cases/new" className="btn primary">
+              <PlusIcon /> File New Case
+            </Link>
+          )}
         </div>
       </div>
+
+      {actionErr && (
+        <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--red-bg)", color: "var(--red)", fontSize: 13, border: "2px solid color-mix(in oklch, var(--red) 30%, transparent)" }}>
+          {actionErr}
+        </div>
+      )}
+
+      {/* Invitations to act as opposing counsel */}
+      {invitations && invitations.length > 0 && (
+        <div className="card" style={{ marginBottom: 16, borderColor: "color-mix(in oklch, var(--gold, #d97706) 30%, var(--border))" }}>
+          <div className="card-head">
+            <div className="row" style={{ gap: 8 }}>
+              <InboxIcon />
+              <h3 className="card-title">Case invitations — opposing counsel needed</h3>
+            </div>
+            <span className="badge gold"><span className="dot" /> {invitations.length} open</span>
+          </div>
+          <div className="card-body" style={{ padding: 0 }}>
+            {invitations.slice(0, 4).map((c: any, i: number, arr: any[]) => (
+              <div key={c._id} className="row" style={{ padding: "12px 18px", gap: 12, borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{c.complainantName} v. {c.opposingPartyName}</div>
+                  <div className="faint" style={{ fontSize: 11 }}>
+                    <span className="case-id">{c.humanId}</span> · {categoryShort(c.category)} · ₹{(c.claimAmount || 0).toLocaleString("en-IN")}
+                    {c.opposingLawyerEmailInvite?.toLowerCase() === email.toLowerCase() && (
+                      <strong style={{ color: "var(--gold, #d97706)" }}> · invited by email</strong>
+                    )}
+                  </div>
+                </div>
+                <button className="btn primary sm" onClick={() => handleJoin(c._id)} disabled={joining === c._id}>
+                  {joining === c._id ? "Joining…" : "Join as opposing counsel"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="stats">
@@ -163,10 +299,21 @@ export default function LawyerDashboardClient({ userId }: { userId: Id<"users"> 
       {cases.length === 0 ? (
         <div className="card" style={{ padding: "60px 24px", textAlign: "center" }}>
           <div className="serif" style={{ fontSize: 22, fontWeight: 500, marginBottom: 8 }}>No cases yet</div>
-          <p className="muted" style={{ marginBottom: 20, fontSize: 13 }}>You have not created any cases or been invited as opposing counsel.</p>
-          <Link href="/lawyer/cases/new" className="btn primary lg" style={{ display: "inline-flex" }}>
-            <PlusIcon /> File your first case
-          </Link>
+          <p className="muted" style={{ marginBottom: 20, fontSize: 13 }}>
+            {isOpposing
+              ? "You have not joined any matters yet. Accept an invitation above, or load a prototype case to explore the workspace."
+              : "You have not created any cases yet. File your first case, or load a prototype case to explore the workspace."}
+          </p>
+          <div className="row" style={{ justifyContent: "center", gap: 8 }}>
+            {!isOpposing && (
+              <Link href="/lawyer/cases/new" className="btn primary lg" style={{ display: "inline-flex" }}>
+                <PlusIcon /> File your first case
+              </Link>
+            )}
+            <button className="btn lg" onClick={handleSeedPrototype} disabled={seeding} style={{ display: "inline-flex" }}>
+              <BeakerIcon /> {seeding ? "Loading…" : "Load a prototype case"}
+            </button>
+          </div>
         </div>
       ) : (
         <div className="card">
@@ -303,6 +450,80 @@ export default function LawyerDashboardClient({ userId }: { userId: Id<"users"> 
           </div>
         </div>
       )}
+
+      {/* Counsel Research Assistant (DeepSeek) */}
+      <div style={{ marginTop: 24 }}>
+        <div className="card">
+          <div className="card-head">
+            <div className="row" style={{ gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 0, background: "var(--primary-bg)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
+                <BotIcon />
+              </div>
+              <div>
+                <div className="card-title" style={{ marginBottom: 2 }}>Counsel Research Assistant</div>
+                <div className="faint" style={{ fontSize: 11 }}>
+                  CPA 2019 research &amp; case Q/A · grounded in the curated precedent set and your own record · advisory only
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="card-body" style={{ display: "grid", gap: 14 }}>
+            <div>
+              <label className="label">Research context</label>
+              <select className="sel" value={researchCaseId} onChange={e => setResearchCaseId(e.target.value)}>
+                <option value="">General CPA 2019 research (no case)</option>
+                {cases.map((c: any) => (
+                  <option key={c._id} value={c._id}>
+                    {c.humanId} — {c.complainantName} v. {c.opposingPartyName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ border: "2px solid var(--border)", background: "var(--bg-2)", padding: 12, display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
+              {messages.map((m, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "10px 14px", fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap",
+                    ...(m.role === "user"
+                      ? { background: "var(--primary)", color: "white", marginLeft: 32 }
+                      : { background: "var(--surface)", border: "2px solid var(--border)", color: "var(--text-2)", marginRight: 32 }),
+                  }}
+                >
+                  {m.content}
+                </div>
+              ))}
+              {asking && (
+                <div style={{ padding: "10px 14px", fontSize: 13, color: "var(--text-3)", marginRight: 32 }}>
+                  Researching…
+                </div>
+              )}
+            </div>
+
+            <div className="row" style={{ gap: 8, alignItems: "flex-end" }}>
+              <div style={{ flex: 1 }}>
+                <label className="label">Your question</label>
+                <textarea
+                  className="textarea"
+                  rows={2}
+                  value={question}
+                  onChange={e => setQuestion(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAsk(); }
+                  }}
+                  placeholder={researchCaseId
+                    ? "e.g. Which precedents from the curated set support my client's position on warranty exclusions?"
+                    : "e.g. What must a complainant prove for 'deficiency in service' under CPA 2019?"}
+                />
+              </div>
+              <button className="btn primary" onClick={handleAsk} disabled={asking || !question.trim()}>
+                <SendIcon /> {asking ? "Asking…" : "Ask"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

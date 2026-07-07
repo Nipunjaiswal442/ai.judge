@@ -55,6 +55,7 @@ function ConfidenceDots({ value }: { value: number }) {
 
 // ── Section definitions ────────────────────────────────────
 const SECTION_IDS = [
+  { id: "record",      title: "Record & Counsel",         color: "var(--blue,#2563eb)" },
   { id: "summary",     title: "Case Summary",            color: "var(--primary)" },
   { id: "agreed",      title: "Agreed Facts",             color: "var(--blue,#2563eb)" },
   { id: "disputed",    title: "Disputed Facts",           color: "var(--gold,#d97706)" },
@@ -70,13 +71,14 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
   const router = useRouter();
   const caseData = useQuery(api.judge.getCaseById, { caseId });
   const brief = useQuery(api.judge.getAnalysisBrief, { caseId });
+  const record = useQuery(api.judge.getCaseFullRecord, { caseId });
   const acknowledgeBrief = useMutation(api.judge.acknowledgeBrief);
   const precedents = useQuery(
     api.precedents.getManyByIds,
     brief?.citedPrecedentIds ? { ids: brief.citedPrecedentIds } : "skip"
   );
 
-  const [activeSection, setActiveSection] = useState("summary");
+  const [activeSection, setActiveSection] = useState("record");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [sourceKind, setSourceKind] = useState<"model" | "stat" | "case">("model");
@@ -110,37 +112,147 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
     );
   }
 
-  if (!brief) {
-    return (
-      <div className="brief-shell">
-        <aside className="brief-toc" />
-        <main className="brief-mid">
-          <div className="card" style={{ padding: 32, textAlign: "center" }}>
-            <div className="serif" style={{ fontSize: 22, fontWeight: 500, marginBottom: 8 }}>Brief Not Yet Generated</div>
-            <p className="muted" style={{ fontSize: 13 }}>
-              The AI analysis brief for {caseData?.humanId} is not available yet.
-            </p>
-          </div>
-        </main>
-        <aside className="brief-source" />
-      </div>
-    );
-  }
-
   const handleAcknowledge = async () => {
+    if (!brief) return;
     setSaving(true);
     await acknowledgeBrief({ caseId, briefId: brief._id, note });
     setSaving(false);
     router.push("/judge/dashboard");
   };
 
-  const currentIdx = SECTION_IDS.findIndex(s => s.id === activeSection);
-  const prevSection = SECTION_IDS[currentIdx - 1];
-  const nextSection = SECTION_IDS[currentIdx + 1];
-  const currentSec = SECTION_IDS[currentIdx];
+  // Without a brief only the lawyer record is available; the AI sections
+  // unlock once the brief has been generated.
+  const sections = brief ? SECTION_IDS : SECTION_IDS.filter(s => s.id === "record");
+  const currentIdx = sections.findIndex(s => s.id === activeSection);
+  const prevSection = sections[currentIdx - 1];
+  const nextSection = sections[currentIdx + 1];
+  const currentSec = sections[currentIdx];
 
   // ── Section body renderers ─────────────────────────────
   const renderSection = () => {
+    if (activeSection === "record") {
+      if (record === undefined) return <div className="muted" style={{ fontSize: 13 }}>Loading case record…</div>;
+      if (!record) return <div className="muted" style={{ fontSize: 13 }}>Record unavailable.</div>;
+
+      const counsels = [
+        {
+          heading: "Complainant Counsel",
+          tone: "blue",
+          party: record.case.complainantName,
+          partyRole: "Complainant",
+          lawyer: record.complainantLawyer,
+          fallback: null as string | null,
+        },
+        {
+          heading: "Opposing Counsel",
+          tone: "gold",
+          party: record.case.opposingPartyName,
+          partyRole: "Opposite Party",
+          lawyer: record.opposingLawyer,
+          fallback: record.opposingLawyerEmailInvite
+            ? `Invited (${record.opposingLawyerEmailInvite}) — not yet joined`
+            : "Not yet assigned",
+        },
+      ];
+
+      return (
+        <div className="col" style={{ gap: 22 }}>
+          {/* Counsel on record */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {counsels.map((c) => (
+              <div key={c.heading} style={{ border: "2px solid var(--border)", background: "var(--surface)" }}>
+                <div style={{ padding: "10px 14px", background: "var(--bg-2)", borderBottom: "1px solid var(--border)" }}>
+                  <span className={"badge " + c.tone}><span className="dot" />{c.heading}</span>
+                </div>
+                <div style={{ padding: 14, fontSize: 13 }}>
+                  <div style={{ marginBottom: 10 }}>
+                    <div className="cap-label" style={{ marginBottom: 2 }}>Party represented</div>
+                    <div style={{ fontWeight: 500 }}>{c.party}</div>
+                    <div className="faint" style={{ fontSize: 11 }}>{c.partyRole}</div>
+                  </div>
+                  {c.lawyer ? (
+                    <div className="col" style={{ gap: 6, fontSize: 12.5 }}>
+                      <div className="row" style={{ justifyContent: "space-between" }}>
+                        <span className="muted">Advocate</span><span style={{ fontWeight: 500 }}>{c.lawyer.name}</span>
+                      </div>
+                      <div className="row" style={{ justifyContent: "space-between" }}>
+                        <span className="muted">Email</span><span className="case-id">{c.lawyer.email}</span>
+                      </div>
+                      <div className="row" style={{ justifyContent: "space-between" }}>
+                        <span className="muted">Bar Council ID</span><span className="case-id">{c.lawyer.barCouncilId || "—"}</span>
+                      </div>
+                      <div className="row" style={{ justifyContent: "space-between" }}>
+                        <span className="muted">Jurisdiction</span><span>{c.lawyer.jurisdiction || "—"}</span>
+                      </div>
+                      {c.lawyer.phone && (
+                        <div className="row" style={{ justifyContent: "space-between" }}>
+                          <span className="muted">Phone</span><span className="case-id">{c.lawyer.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="muted" style={{ fontSize: 12.5 }}>{c.fallback}</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Structured submissions from both sides */}
+          <div>
+            <div className="cap-label" style={{ marginBottom: 10 }}>Structured Q&amp;A submissions</div>
+            {record.submissions.length === 0 && (
+              <div className="muted" style={{ fontSize: 13 }}>Neither side has started its structured Q&amp;A yet.</div>
+            )}
+            <div className="col" style={{ gap: 14 }}>
+              {(["COMPLAINANT", "OPPOSING"] as const).map((sideKey) => {
+                const sub = record.submissions.find((s: any) => s.side === sideKey);
+                const tone = sideKey === "COMPLAINANT" ? "blue" : "gold";
+                const label = sideKey === "COMPLAINANT" ? "Complainant side" : "Opposing side";
+                return (
+                  <div key={sideKey} style={{ border: "2px solid var(--border)", background: "var(--surface)" }}>
+                    <div style={{ padding: "10px 14px", background: "var(--bg-2)", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span className={"badge " + tone}><span className="dot" />{label}</span>
+                      {sub ? (
+                        sub.status === "SUBMITTED"
+                          ? <span className="badge green"><CheckIcon /> Submitted{sub.submittedAt ? " · " + new Date(sub.submittedAt).toLocaleDateString("en-IN") : ""}</span>
+                          : <span className="badge amber">In progress</span>
+                      ) : (
+                        <span className="badge gray">Not started</span>
+                      )}
+                    </div>
+                    {sub && (
+                      <div className="col" style={{ padding: 14, gap: 12 }}>
+                        {sub.entries.map((e: any, i: number) => (
+                          <div key={i}>
+                            <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 3 }}>
+                              {sideKey === "COMPLAINANT" ? "C" : "O"}{i + 1}. {e.question}
+                            </div>
+                            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.65, color: e.answer ? "var(--text-2)" : "var(--text-4)" }}>
+                              {e.answer || "No answer recorded."}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {!brief && (
+            <div style={{ padding: "12px 16px", background: "var(--amber-bg,#fffbeb)", border: "2px solid color-mix(in oklch, var(--amber,#d97706) 30%, transparent)", fontSize: 13, color: "var(--text-2)" }}>
+              The AI analysis brief has not been generated for this matter yet. It becomes available once both
+              sides submit their Q&amp;A and counsel triggers generation.
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (!brief) return null;
+
     if (activeSection === "summary") {
       return (
         <div className="col" style={{ gap: 14 }}>
@@ -301,6 +413,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
   // ── Source panel ───────────────────────────────────────
   const renderSource = () => {
     if (sourceKind === "model") {
+      if (!brief) return <div className="muted" style={{ fontSize: 13 }}>No brief generated yet — model trace unavailable.</div>;
       return (
         <div>
           <div className="row" style={{ gap: 6, marginBottom: 10 }}>
@@ -309,7 +422,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
           </div>
           <div style={{ padding: 14, borderRadius: 0, background: "var(--bg-2)", fontSize: 12.5, lineHeight: 1.7 }}>
             {[
-              { k: "Model", v: "claude-sonnet-4-6" },
+              { k: "Model", v: brief.llmModel || "deepseek-ai/deepseek-v3.2" },
               { k: "Generated", v: brief._creationTime ? new Date(brief._creationTime).toLocaleString("en-IN") : "—" },
               { k: "Precedent set", v: "Curated · 50+ cases" },
               { k: "Hallucination guard", v: "✓ closed-set retrieval" },
@@ -383,31 +496,33 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
             <span className="muted tnum" style={{ fontSize: 11 }}>{caseData.jurisdiction}</span>
           </div>
 
-          <div className="row" style={{ marginTop: 14, gap: 10, padding: 10, background: "var(--bg-2)", borderRadius: 0, border: "2px solid var(--border)" }}>
-            <div style={{ position: "relative", width: 36, height: 36, flexShrink: 0 }}>
-              <svg width="36" height="36" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="15" fill="none" stroke="var(--border-2)" strokeWidth="3"/>
-                <circle cx="18" cy="18" r="15" fill="none" stroke="var(--primary)" strokeWidth="3"
-                  strokeDasharray={`${2 * Math.PI * 15}`}
-                  strokeDashoffset={`${2 * Math.PI * 15 * (1 - (brief.confidenceScore ?? 0) / 100)}`}
-                  strokeLinecap="round"
-                  transform="rotate(-90 18 18)"
-                />
-              </svg>
-              <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 600, fontFamily: "var(--mono)" }}>
-                {brief.confidenceScore ?? 0}%
+          {brief && (
+            <div className="row" style={{ marginTop: 14, gap: 10, padding: 10, background: "var(--bg-2)", borderRadius: 0, border: "2px solid var(--border)" }}>
+              <div style={{ position: "relative", width: 36, height: 36, flexShrink: 0 }}>
+                <svg width="36" height="36" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="15" fill="none" stroke="var(--border-2)" strokeWidth="3"/>
+                  <circle cx="18" cy="18" r="15" fill="none" stroke="var(--primary)" strokeWidth="3"
+                    strokeDasharray={`${2 * Math.PI * 15}`}
+                    strokeDashoffset={`${2 * Math.PI * 15 * (1 - (brief.confidenceScore ?? 0) / 100)}`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 18 18)"
+                  />
+                </svg>
+                <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", fontSize: 9, fontWeight: 600, fontFamily: "var(--mono)" }}>
+                  {brief.confidenceScore ?? 0}%
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 500 }}>Overall confidence</div>
+                <div className="faint" style={{ fontSize: 10.5 }}>Self-reported · AI generated</div>
               </div>
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, fontWeight: 500 }}>Overall confidence</div>
-              <div className="faint" style={{ fontSize: 10.5 }}>Self-reported · AI generated</div>
-            </div>
-          </div>
+          )}
         </div>
 
         <div style={{ flex: 1, overflow: "auto", padding: "12px 12px" }}>
           <div className="cap-label" style={{ padding: "0 8px 6px" }}>Sections</div>
-          {SECTION_IDS.map((s, i) => (
+          {sections.map((s, i) => (
             <button
               key={s.id}
               onClick={() => setActiveSection(s.id)}
@@ -431,7 +546,11 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
         {/* Bench actions */}
         <div style={{ padding: 14, borderTop: "1px solid var(--border)" }}>
           <div className="cap-label" style={{ marginBottom: 6 }}>Bench actions</div>
-          {!brief.judgeAcknowledged ? (
+          {!brief ? (
+            <span className="badge amber" style={{ width: "100%", justifyContent: "center", padding: "6px 10px" }}>
+              Awaiting analysis brief
+            </span>
+          ) : !brief.judgeAcknowledged ? (
             <button
               className="btn primary"
               style={{ width: "100%", justifyContent: "center" }}
@@ -458,8 +577,10 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
       <main className="brief-mid">
         <div className="row" style={{ marginBottom: 6, justifyContent: "space-between" }}>
           <div className="row" style={{ gap: 8 }}>
-            <span className="cap-label">Section {String(currentIdx + 1).padStart(2, "0")} of {String(SECTION_IDS.length).padStart(2, "0")}</span>
-            <span className="ai-badge"><SparklesIcon /> AI generated</span>
+            <span className="cap-label">Section {String(currentIdx + 1).padStart(2, "0")} of {String(sections.length).padStart(2, "0")}</span>
+            {activeSection === "record"
+              ? <span className="badge blue"><span className="dot" /> Lawyer-submitted record</span>
+              : <span className="ai-badge"><SparklesIcon /> AI generated</span>}
           </div>
           <div className="row" style={{ gap: 6 }}>
             <button className="btn ghost sm"><FlagIcon /> Flag</button>
