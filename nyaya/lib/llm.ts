@@ -1,8 +1,60 @@
 import OpenAI from "openai";
+import { LLM_MODEL } from "./llmModel";
 
-// DeepSeek served through NVIDIA's OpenAI-compatible endpoint. The model
-// returns its reasoning in `reasoning_content`; the final answer is `content`.
-export const DEEPSEEK_MODEL = "deepseek-ai/deepseek-v4-flash";
+// Reasoning models sometimes leak thinking prose into `content` before the
+// actual answer ("We need to produce JSON...{...}"), wrap it in <think>
+// blocks, or fence it in markdown. Strip all of that and cut the string down
+// to the outermost JSON object before parsing.
+function extractJson(raw: string): any {
+  let text = raw
+    .replace(/<think>[\s\S]*?<\/think>/g, "")
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    // fall through to brace slicing
+  }
+
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("Model response contained no JSON object.");
+  }
+  return JSON.parse(text.slice(start, end + 1));
+}
+
+// Chat (non-JSON) outputs: drop <think> blocks if the model leaks them.
+function cleanChatContent(raw: string): string {
+  return raw.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+}
+
+// NVIDIA's gateway buffers non-streaming responses and drops the connection
+// on long generations (observed: 0 bytes for 4+ minutes, then a reset).
+// Streaming keeps bytes flowing from the first token, so every call here
+// streams and accumulates the final content server-side.
+async function streamCompletion(params: {
+  messages: any[];
+  temperature: number;
+  maxTokens: number;
+}): Promise<string> {
+  const stream = await client().chat.completions.create({
+    model: LLM_MODEL,
+    messages: params.messages,
+    temperature: params.temperature,
+    top_p: 0.95,
+    max_tokens: params.maxTokens,
+    stream: true,
+  });
+
+  let content = "";
+  for await (const chunk of stream) {
+    content += chunk.choices?.[0]?.delta?.content || "";
+  }
+  return content;
+}
 
 // Constructed lazily: the OpenAI constructor throws when no API key is
 // present, which breaks Convex's module analysis during deploys.
@@ -33,7 +85,8 @@ export const generateBrief = async (caseDetails: any, precedents: any[]) => {
     "caveats": ["string"]
   }
   
-  IMPORTANT: You must include a 'caveats' array. If you do not have caveats, generate standard ones about advisory nature.`;
+  IMPORTANT: You must include a 'caveats' array. If you do not have caveats, generate standard ones about advisory nature.
+  Be concise: keep every string under 40 words and every array at 5 items or fewer, so the JSON stays compact and complete.`;
 
   const messages: any[] = [
     { role: "system", content: SYSTEM_INSTRUCTION },
@@ -41,26 +94,8 @@ export const generateBrief = async (caseDetails: any, precedents: any[]) => {
   ];
 
   try {
-    const response = await client().chat.completions.create({
-      model: DEEPSEEK_MODEL,
-      messages,
-      temperature: 0.1,
-      top_p: 0.95,
-      max_tokens: 8192,
-      response_format: { type: "json_object" }, // If supported. If not, text mode will still try.
-    });
-
-    const content = response.choices[0]?.message?.content || "{}";
-    
-    // Attempt to parse JSON
-    let parsed;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      // In case it wrapped in markdown
-      const cleaned = content.replace(/```json/g, "").replace(/```/g, "").trim();
-      parsed = JSON.parse(cleaned);
-    }
+    const content = await streamCompletion({ messages, temperature: 0.1, maxTokens: 4096 });
+    const parsed = extractJson(content || "{}");
 
     if (!parsed.caveats || !Array.isArray(parsed.caveats) || parsed.caveats.length === 0) {
       parsed.caveats = [
@@ -117,15 +152,9 @@ ${ownSubmission ? `Counsel's own Q&A record for this case:\n${JSON.stringify(own
     { role: "user", content: question },
   ];
 
-  const response = await client().chat.completions.create({
-    model: DEEPSEEK_MODEL,
-    messages,
-    temperature: 0.2,
-    top_p: 0.95,
-    max_tokens: 1600,
-  });
-
-  const content = response.choices[0]?.message?.content?.trim();
+  const content = cleanChatContent(
+    await streamCompletion({ messages, temperature: 0.2, maxTokens: 1600 })
+  );
   if (!content) throw new Error("Assistant returned an empty response.");
   return content;
 };
@@ -183,15 +212,9 @@ ${JSON.stringify(precedents, null, 2)}`,
   ];
 
   try {
-    const response = await client().chat.completions.create({
-      model: DEEPSEEK_MODEL,
-      messages,
-      temperature: 0.1,
-      top_p: 0.95,
-      max_tokens: 1800,
-    });
-
-    const content = response.choices[0]?.message?.content?.trim();
+    const content = cleanChatContent(
+      await streamCompletion({ messages, temperature: 0.1, maxTokens: 1800 })
+    );
     if (!content) {
       throw new Error("Assistant returned an empty response.");
     }

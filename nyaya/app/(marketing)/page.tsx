@@ -893,7 +893,7 @@ export default function LandingPage() {
             <span className="tech-pill">Firebase Auth</span>
             <span className="tech-pill">Tailwind CSS</span>
             <span className="tech-pill">React 19</span>
-            <span className="tech-pill">DeepSeek V2 via NVIDIA NIM</span>
+            <span className="tech-pill">MiniMax M3 via NVIDIA NIM</span>
             <span className="tech-pill">Vector retrieval</span>
             <span className="tech-pill">Vercel</span>
           </div>

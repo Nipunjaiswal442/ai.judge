@@ -5,7 +5,8 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { generateCounselResearch } from "../lib/llm";
 
-// DeepSeek-backed research & Q&A assistant for counsel. Grounded in the
+// LLM-backed research & Q&A assistant for counsel (model: lib/llmModel.ts,
+// served via NVIDIA's OpenAI-compatible endpoint). Grounded in the
 // curated precedent set plus (optionally) one of the lawyer's own cases.
 export const askCounselResearch = action({
   args: {

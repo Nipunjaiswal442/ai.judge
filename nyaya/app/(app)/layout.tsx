@@ -92,7 +92,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const judgeNav = [
     { href: "/judge/dashboard", label: "Cases Assigned", icon: <ScaleIcon /> },
-    { href: "/judge/dashboard", label: "Precedent Library", icon: <BookIcon /> },
+    { href: "/judge/qa", label: "Bench Q&A", icon: <DocIcon /> },
+    { href: "/precedents", label: "Precedent Library", icon: <BookIcon /> },
     { href: "/judge/dashboard", label: "Audit Log", icon: <ShieldIcon /> },
     { href: "/judge/dashboard", label: "Calendar", icon: <CalendarIcon /> },
     { href: "/profile", label: "My Profile", icon: <UserIcon /> },
@@ -101,18 +102,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const complainantNav = [
     { href: "/lawyer/dashboard", label: "My Cases", icon: <FilingIcon /> },
     { href: "/lawyer/cases/new", label: "File New Case", icon: <PlusIcon /> },
-    { href: "/lawyer/dashboard", label: "Active Q&A", icon: <DocIcon /> },
-    { href: "/lawyer/dashboard", label: "Document Vault", icon: <PaperclipIcon /> },
-    { href: "/lawyer/dashboard", label: "Precedent Library", icon: <BookIcon /> },
+    { href: "/lawyer/qa", label: "Research Q&A", icon: <DocIcon /> },
+    { href: "/lawyer/documents", label: "Document Vault", icon: <PaperclipIcon /> },
+    { href: "/precedents", label: "Precedent Library", icon: <BookIcon /> },
     { href: "/profile", label: "My Profile", icon: <UserIcon /> },
   ];
 
   const opposingNav = [
     { href: "/lawyer/dashboard", label: "Defended Matters", icon: <FilingIcon /> },
     { href: "/lawyer/dashboard", label: "Case Invitations", icon: <PlusIcon /> },
-    { href: "/lawyer/dashboard", label: "Active Q&A", icon: <DocIcon /> },
-    { href: "/lawyer/dashboard", label: "Document Vault", icon: <PaperclipIcon /> },
-    { href: "/lawyer/dashboard", label: "Precedent Library", icon: <BookIcon /> },
+    { href: "/lawyer/qa", label: "Research Q&A", icon: <DocIcon /> },
+    { href: "/lawyer/documents", label: "Document Vault", icon: <PaperclipIcon /> },
+    { href: "/precedents", label: "Precedent Library", icon: <BookIcon /> },
     { href: "/profile", label: "My Profile", icon: <UserIcon /> },
   ];
 

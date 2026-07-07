@@ -1,9 +1,10 @@
 "use client";
 
-import { useAction, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CASE_CATEGORIES } from "@/lib/caseCategories";
 
 // ── Icons ──────────────────────────────────────────────────
@@ -24,9 +25,6 @@ function ChevronRIcon() {
 }
 function ArrowRIcon() {
   return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>;
-}
-function SendIcon() {
-  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>;
 }
 function BotIcon() {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M12 11V7M8 7h8a2 2 0 0 1 2 2v2H6V9a2 2 0 0 1 2-2zM9 15h.01M15 15h.01"/></svg>;
@@ -58,30 +56,12 @@ function categoryShort(cat: string) {
   return f ? f.label.replace("(Consumer)", "").trim() : cat.replace(/_/g, " ");
 }
 
-type ChatMsg = { role: "judge" | "assistant"; content: string };
-const DEFAULT_PROMPT = "Provide a neutral synthesis of lawyer-submitted facts, key disputes, evidentiary gaps, and procedural flags for this case.";
-
 // ── Component ──────────────────────────────────────────────
 export default function JudgeDashboardClient() {
   const cases = useQuery(api.judge.getJudgeCases, {});
-  const askSynthesis = useAction(api.analysis.askJudgeCaseSynthesis);
   const router = useRouter();
 
   const [filter, setFilter] = useState("all");
-  const [selectedCaseId, setSelectedCaseId] = useState("");
-  const [question, setQuestion] = useState("");
-  const [asking, setAsking] = useState(false);
-  const [chatErr, setChatErr] = useState("");
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    { role: "assistant", content: "Select a case and ask for a synthesis. I will ground every answer in the lawyers' submitted Q&A and the generated advisory brief." },
-  ]);
-
-  useEffect(() => {
-    if (!cases || cases.length === 0 || selectedCaseId) return;
-    setSelectedCaseId(cases[0]._id);
-  }, [cases, selectedCaseId]);
-
-  const activeCase = useMemo(() => cases?.find((c: any) => c._id === selectedCaseId) || cases?.[0], [cases, selectedCaseId]);
 
   if (cases === undefined) {
     return <div className="page"><div className="muted" style={{ fontSize: 13 }}>Loading docket…</div></div>;
@@ -109,25 +89,6 @@ export default function JudgeDashboardClient() {
   const reviewedCnt   = cases.filter((c: any) => c.status === "JUDGE_REVIEWED").length;
   const priorityCase  = cases.find((c: any) => c.status === "BRIEF_GENERATED");
 
-  const handleAsk = async () => {
-    if (!activeCase?._id || asking) return;
-    setAsking(true);
-    setChatErr("");
-    const prompt = question.trim() || DEFAULT_PROMPT;
-    setMessages(p => [...p, { role: "judge", content: prompt }]);
-    setQuestion("");
-    try {
-      const resp = await askSynthesis({ caseId: activeCase._id, question: prompt });
-      setMessages(p => [...p, { role: "assistant", content: resp.answer }]);
-    } catch (e: any) {
-      const msg = e?.message || "Unable to generate synthesis right now.";
-      setChatErr(msg);
-      setMessages(p => [...p, { role: "assistant", content: `I could not complete that request: ${msg}` }]);
-    } finally {
-      setAsking(false);
-    }
-  };
-
   return (
     <div className="page">
       {/* Watermark */}
@@ -150,7 +111,8 @@ export default function JudgeDashboardClient() {
         </div>
         <div className="page-actions">
           <button className="btn"><CalendarIcon /> Cause list</button>
-          <button className="btn"><BookIcon /> Precedent library</button>
+          <Link href="/precedents" className="btn"><BookIcon /> Precedent library</Link>
+          <Link href="/judge/qa" className="btn"><BotIcon /> Bench Q&amp;A</Link>
           {priorityCase && (
             <button className="btn primary" onClick={() => router.push(`/judge/cases/${priorityCase._id}`)}>
               <SparklesIcon /> Open today's priority brief
@@ -294,78 +256,24 @@ export default function JudgeDashboardClient() {
         </div>
       </div>
 
-      {/* Bench Assistant */}
+      {/* Bench Assistant lives exclusively on the Bench Q&A page */}
       <div style={{ marginTop: 24 }}>
-        <div className="card">
-          <div className="card-head">
+        <div className="card" style={{ borderColor: "color-mix(in oklch, var(--primary) 18%, var(--border))" }}>
+          <div className="card-body row" style={{ justifyContent: "space-between", gap: 16 }}>
             <div className="row" style={{ gap: 12 }}>
               <div style={{ width: 36, height: 36, borderRadius: 0, background: "var(--primary-bg)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
                 <BotIcon />
               </div>
               <div>
-                <div className="card-title" style={{ marginBottom: 2 }}>Bench Assistant</div>
-                <div className="faint" style={{ fontSize: 11 }}>Ask for grounded synthesis of lawyer submissions for a selected case.</div>
+                <div style={{ fontSize: 13.5, fontWeight: 500 }}>Need a grounded synthesis of lawyer submissions?</div>
+                <div className="faint" style={{ fontSize: 11.5 }}>
+                  The Bench Assistant now lives in its own Q&amp;A workspace.
+                </div>
               </div>
             </div>
-          </div>
-          <div className="card-body" style={{ display: "grid", gap: 16 }}>
-            {/* Case selector */}
-            <div>
-              <label className="label">Case context</label>
-              <select
-                className="sel"
-                value={activeCase?._id || ""}
-                onChange={e => setSelectedCaseId(e.target.value)}
-              >
-                {cases.map((c: any) => (
-                  <option key={c._id} value={c._id}>
-                    {c.humanId} — {c.complainantName} v. {c.opposingPartyName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Chat */}
-            <div style={{ borderRadius: 0, border: "2px solid var(--border)", background: "var(--bg-2)", padding: 12, display: "flex", flexDirection: "column", gap: 8, maxHeight: 340, overflowY: "auto" }}>
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  style={{
-                    borderRadius: 0, padding: "10px 14px", fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap",
-                    ...(m.role === "judge"
-                      ? { background: "var(--primary)", color: "white", marginLeft: 32 }
-                      : { background: "var(--surface)", border: "2px solid var(--border)", color: "var(--text-2)", marginRight: 32 })
-                  }}
-                >
-                  {m.content}
-                </div>
-              ))}
-            </div>
-
-            {chatErr && (
-              <div style={{ padding: "8px 12px", background: "var(--red-bg)", color: "var(--red)", borderRadius: 0, fontSize: 12 }}>{chatErr}</div>
-            )}
-
-            {/* Input */}
-            <div>
-              <label className="label">Judge prompt</label>
-              <textarea
-                className="textarea"
-                rows={3}
-                value={question}
-                onChange={e => setQuestion(e.target.value)}
-                placeholder="Ask about disputed facts, evidentiary gaps, or side-by-side positions. Leave blank to auto-generate a full synthesis."
-              />
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button
-                className="btn primary"
-                onClick={handleAsk}
-                disabled={asking || !activeCase?._id}
-              >
-                <SendIcon /> {asking ? "Synthesising…" : "Ask Bench Assistant"}
-              </button>
-            </div>
+            <Link href="/judge/qa" className="btn primary">
+              Open Bench Q&amp;A <ChevronRIcon />
+            </Link>
           </div>
         </div>
       </div>

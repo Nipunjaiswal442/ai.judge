@@ -2,6 +2,33 @@ import { mutation, query, action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
+import curated from "../lib/seedData/precedents.json";
+
+// One-click import of the curated precedent set (idempotent — no-op if the
+// library already has entries). Backs the empty state of the Precedent Library.
+export const seedCurated = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db.query("precedents").take(1);
+    if (existing.length > 0) return { inserted: 0, alreadySeeded: true };
+
+    let inserted = 0;
+    for (const p of curated as any[]) {
+      await ctx.db.insert("precedents", {
+        title: p.title,
+        citation: p.citation,
+        commission: p.commission,
+        year: p.year,
+        cpaSections: p.cpaSections,
+        summary: p.summary,
+        outcome: p.outcome,
+        keywords: p.keywords,
+      });
+      inserted++;
+    }
+    return { inserted, alreadySeeded: false };
+  },
+});
 
 export const insertPrecedent = mutation({
   args: {

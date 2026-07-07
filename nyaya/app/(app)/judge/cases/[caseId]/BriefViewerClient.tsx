@@ -422,7 +422,7 @@ export default function BriefViewerClient({ caseId }: { caseId: Id<"cases"> }) {
           </div>
           <div style={{ padding: 14, borderRadius: 0, background: "var(--bg-2)", fontSize: 12.5, lineHeight: 1.7 }}>
             {[
-              { k: "Model", v: brief.llmModel || "deepseek-ai/deepseek-v3.2" },
+              { k: "Model", v: brief.llmModel || "minimaxai/minimax-m3" },
               { k: "Generated", v: brief._creationTime ? new Date(brief._creationTime).toLocaleString("en-IN") : "—" },
               { k: "Precedent set", v: "Curated · 50+ cases" },
               { k: "Hallucination guard", v: "✓ closed-set retrieval" },

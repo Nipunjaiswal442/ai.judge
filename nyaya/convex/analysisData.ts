@@ -1,9 +1,6 @@
 import { internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-
-// Kept in sync with DEEPSEEK_MODEL in lib/llm.ts (not imported — that module
-// pulls in the OpenAI SDK, which only runs in "use node" Convex modules).
-const DEEPSEEK_MODEL = "deepseek-ai/deepseek-v4-flash";
+import { LLM_MODEL } from "../lib/llmModel";
 
 export const collectBriefContext = internalQuery({
   args: { caseId: v.id("cases") },
@@ -94,7 +91,7 @@ export const saveBrief = internalMutation({
       caveats: Array.isArray(args.brief.caveats) && args.brief.caveats.length > 0
         ? args.brief.caveats
         : ["AI-generated advisory brief; verify all facts and precedents."],
-      llmModel: DEEPSEEK_MODEL,
+      llmModel: LLM_MODEL,
       judgeAcknowledged: false,
     };
 
